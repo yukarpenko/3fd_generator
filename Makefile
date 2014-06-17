@@ -13,7 +13,7 @@ FFLAGS        = -lgfortran -g -std=legacy
 LIBS          = $(SYSLIBS)
 GLIBS         = $(SYSLIBS)
 
-OBJS        = main.o readpt.o
+OBJS        = main.o read.o readpt.o
               
 TARGET	    = generator
 #------------------------------------------------------------------------------

@@ -19,8 +19,8 @@ c     *                 Npmin,Npmax,Nptot)
       logical     tfreg
       integer     pibint
       character*50 partcl
-      partcl = 'Au30mix_b6_Npi2_i3_Bps.dat'
-      InOut=0
+      partcl = 'Au30mix_i1_Bps.dat'
+      InOut=1
 *-------------------------------------------------------------*
        IF (InOut.eq.0) THEN
         OPEN (unit=nflpar,file=partcl,
@@ -70,6 +70,7 @@ c     *                 Npmin,Npmax,Nptot)
          read (Nflpar,*) ifluid(i),x(i),y(i),z(i),Timeb(i),
      *        px(i),py(i),pz(i),Tbp(i),Chb(i),dNbp(i),Ebp(i),
      *        Chsb(i),Pbp(i),Qbp(i),Rpfl(i)
+      print *, ifluid(i), x(i), y(i), z(i), px(i), py(i), pz(i)
 	  END DO
        END IF
        CLOSE (Nflpar)
