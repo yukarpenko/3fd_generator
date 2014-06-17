@@ -20,6 +20,7 @@ c     *                 Npmin,Npmax,Nptot)
       integer     pibint
       character*50 partcl
       partcl = 'Au30mix_b6_Npi2_i3_Bps.dat'
+      InOut=0
 *-------------------------------------------------------------*
        IF (InOut.eq.0) THEN
         OPEN (unit=nflpar,file=partcl,
@@ -32,15 +33,32 @@ c     *                 Npmin,Npmax,Nptot)
      *                Npr,Ntg1,Nptotin,Nptot0N,Qp,Qt,dvofr,alf0,Kdump,
      *                gamh,beta,strm,iextra,gamq,betaq,iextraq,
      *                Qbstop,spectat,Npmin,Npmax,Nptot
+      print *, ApN,AtN,EkinN,trl,tfreg,pibint,interEoS,
+     *                nroN,Lpercell,dxdz,dxdt,Lnucl,ieos,edefr0,ehdfr0,
+     *                RpN,RtN,hxN,hyN,hzN,dtN,hxmin,hymin,hzmin,dtmin,
+     *                hxnew,hynew,hznew,dtnew,
+     *                uN,guN,V0N,g0N,RoN,RoiN,NML,jFreez,timefrz,
+     *                Npr,Ntg1,Nptotin,Nptot0N,Qp,Qt,dvofr,alf0,Kdump,
+     *                gamh,beta,strm,iextra,gamq,betaq,iextraq,
+     *                Qbstop,spectat,Npmin,Npmax,Nptot
 	  DO i=1,Nptot
          read (Nflpar) ifluid(i),x(i),y(i),z(i),Timeb(i),
      *        px(i),py(i),pz(i),Tbp(i),Chb(i),dNbp(i),Ebp(i),
      *        Chsb(i),Pbp(i),Qbp(i),Rpfl(i)
+      print *, ifluid(i), x(i), y(i), z(i), px(i), py(i), pz(i)
 	  END DO
        ELSE IF (InOut.eq.1) THEN
         OPEN (unit=nflpar,file=partcl,
      *        status='unknown',form='formatted')
         READ (Nflpar,*) ApN,AtN,EkinN,trl,tfreg,pibint,interEoS,
+     *                nroN,Lpercell,dxdz,dxdt,Lnucl,ieos,edefr0,ehdfr0,
+     *                RpN,RtN,hxN,hyN,hzN,dtN,hxmin,hymin,hzmin,dtmin,
+     *                hxnew,hynew,hznew,dtnew,
+     *                uN,guN,V0N,g0N,RoN,RoiN,NML,jFreez,timefrz,
+     *                Npr,Ntg1,Nptotin,Nptot0N,Qp,Qt,dvofr,alf0,Kdump,
+     *                gamh,beta,strm,iextra,gamq,betaq,iextraq,
+     *                Qbstop,spectat,Npmin,Npmax,Nptot
+      print *, ApN,AtN,EkinN,trl,tfreg,pibint,interEoS,
      *                nroN,Lpercell,dxdz,dxdt,Lnucl,ieos,edefr0,ehdfr0,
      *                RpN,RtN,hxN,hyN,hzN,dtN,hxmin,hymin,hzmin,dtmin,
      *                hxnew,hynew,hznew,dtnew,

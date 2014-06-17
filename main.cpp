@@ -4,13 +4,13 @@
 extern "C"{
  void froutine_(void) ;
  void finit_(void) ;
+ void readpt_(void) ;
 }
 
 
 int main()
 {
 	std::cout << "hello world\n" ;
-  finit_() ;
-	froutine_() ;
+  readpt_() ;
 	return 0 ;
 }

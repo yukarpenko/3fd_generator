@@ -7,14 +7,13 @@ CXX           = g++
 F             = gfortran
 CXXFLAGS      = -fPIC -g
 LD            = g++
-LDFLAGS       = -g
-SOFLAGS       = -shared
-FFLAGS        = -lgfortran -g
+LDFLAGS       = -g -std=legacy
+FFLAGS        = -lgfortran -g -std=legacy
 
 LIBS          = $(SYSLIBS)
 GLIBS         = $(SYSLIBS)
 
-OBJS        = main.o test.o readpt.o
+OBJS        = main.o readpt.o
               
 TARGET	    = generator
 #------------------------------------------------------------------------------
