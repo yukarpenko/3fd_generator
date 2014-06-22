@@ -9,7 +9,10 @@ FFLAGS        = -lgfortran -g
 LIBS          = $(SYSLIBS)
 GLIBS         = $(SYSLIBS)
 
-OBJS        = main.o read.o ParticlePDG2.o DecayChannel.o DatabasePDG2.o
+vpath %.cpp src
+SRC        = main.cpp read.cpp ParticlePDG2.cpp DecayChannel.cpp DatabasePDG2.cpp
+
+OBJS       = $(patsubst %.cpp,obj/%.o,$(SRC)) 
               
 TARGET	    = generator
 #------------------------------------------------------------------------------
@@ -19,8 +22,13 @@ $(TARGET):       $(OBJS)
 clean:
 		@rm -f $(OBJS) $(TARGET)
 
-%.o : %.cpp
-	$(CXX) $(CXXFLAGS) -c $<
+$(OBJS): | objdir
+
+objdir:
+	@mkdir -p obj
+
+obj/%.o : %.cpp
+	$(CXX) $(CXXFLAGS) -c $< -o $@
 	
-%.o : %.f
+obj/%.o : %.f
 	$(F) $(FFLAGS) -c $<
