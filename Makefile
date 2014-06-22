@@ -1,19 +1,15 @@
 
-ROOTCFLAGS   := $(shell root-config --cflags)
-ROOTLIBS     := $(shell root-config --libs)
-ROOTGLIBS    := $(shell root-config --glibs)
-
 CXX           = g++
 F             = gfortran
-CXXFLAGS      = -fPIC -g
+CXXFLAGS      = -fPIC -g $(shell root-config --cflags)
 LD            = g++
-LDFLAGS       = -g -std=legacy
-FFLAGS        = -lgfortran -g -std=legacy
+LDFLAGS       = -g $(shell root-config --libs)
+FFLAGS        = -lgfortran -g
 
 LIBS          = $(SYSLIBS)
 GLIBS         = $(SYSLIBS)
 
-OBJS        = main.o read.o readpt.o
+OBJS        = main.o read.o ParticlePDG2.o DecayChannel.o DatabasePDG2.o
               
 TARGET	    = generator
 #------------------------------------------------------------------------------
