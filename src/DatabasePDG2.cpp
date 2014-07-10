@@ -2,8 +2,6 @@
 #ifndef DATABASE_PDG2
 #include "DatabasePDG2.h"
 #endif
-#include "params.h"
-
 #include <iostream>
 #include <string>
 #include <cstring>
@@ -57,7 +55,7 @@ double Clebsch_Gordan(double j1, double m1, double j2, double m2, double J, doub
 }
 
 
-DatabasePDG2::DatabasePDG2(char *fileparticles, char *filedecay) {
+DatabasePDG2::DatabasePDG2(const char *fileparticles, const char *filedecay) {
   fNParticles = 0;
   strcpy(fParticleFilename, fileparticles);
   strcpy(fDecayFilename, filedecay);
@@ -493,7 +491,7 @@ int DatabasePDG2::GetIndex(Int_t pdg) {
 
 int DatabasePDG2::GetPionIndex()
 { 
-  char* piname="pi-" ;
+  const char* piname="pi-" ;
   return GetIndex(GetPDGParticle(piname)->GetPDG()) ; 
 }
 
@@ -521,7 +519,7 @@ Bool_t DatabasePDG2::GetPDGParticleStatus(Int_t pdg) {
   return kFALSE;
 };
 
-ParticlePDG2* DatabasePDG2::GetPDGParticle(Char_t* name) {
+ParticlePDG2* DatabasePDG2::GetPDGParticle(const Char_t* name) {
   Int_t nFindings = 0;
   Int_t firstTimeIndex = 0;
   for(Int_t i=0; i<fNParticles; i++) {

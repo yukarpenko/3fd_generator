@@ -13,7 +13,7 @@ class BaryonRich {
       *Rpfl, *Qbp;
   int *ifluid;
 public:
-  BaryonRich(char *filename);
+  BaryonRich(const char *filename);
   inline int getN(void) { return Nptot; }
   inline float getX(int i) { return x[i]; }
   inline float getY(int i) { return y[i]; }
@@ -23,6 +23,8 @@ public:
   inline float getVy(int i) { return py[i]; }
   inline float getVz(int i) { return pz[i]; }
   inline float getTemp(int i) { return Tbp[i]; }
+  inline float getMuB(int i) { return Chb[i]; }
+  inline float getMuS(int i) { return Chsb[i]; }
   inline float getVol(int i) { return Qbp[i]/fabs(dNbp[i]); }  // fm^3
   inline float getRpfl(int i) { return Rpfl[i]; } // concentration, <= 1
 };
@@ -40,7 +42,7 @@ class Fireball {
   float *xpi, *ypi, *zpi, *Timepi, *pxpi, *pypi, *pzpi, *eppi, *Vpip, *Tpip,
       *Etpip;
  public:
-  Fireball(char *filename);
+  Fireball(const char *filename);
   inline int getN(void) { return Jpi; }
   inline float getX(int i) { return xpi[i]; }
   inline float getY(int i) { return ypi[i]; }

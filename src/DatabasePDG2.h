@@ -29,7 +29,7 @@ class DatabasePDG2 {
   void SortParticles();                     // put the good status particles at the beggining of the list
 
  public:
-  DatabasePDG2(char *fileparticles, char *filedecay);
+  DatabasePDG2(const char *fileparticles, const char *filedecay);
   ~DatabasePDG2();
   void SortParticlesByMass();
   void CorrectBranching() ;
@@ -60,7 +60,7 @@ class DatabasePDG2 {
   ParticlePDG2* GetPDGParticle(Int_t pdg, Int_t& index);
   int GetIndex(Int_t pdg) ;
   Bool_t GetPDGParticleStatus(Int_t pdg);
-  ParticlePDG2* GetPDGParticle(Char_t *name);
+  ParticlePDG2* GetPDGParticle(const Char_t *name);
   Bool_t GetPDGParticleStatus(Char_t *name);
   Bool_t GetUseCharmParticles() {return fUseCharmParticles;};
   Double_t GetMinimumWidth() {return fMinimumWidth;};

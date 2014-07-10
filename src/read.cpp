@@ -5,7 +5,10 @@
 
 using namespace std;
 
-BaryonRich::BaryonRich(char* filename) {
+const double Mn = 0.939; // average proton-neutron mass, GeV
+const double n0 = 0.15; // normal nuclear density, [1/fm^3]
+
+BaryonRich::BaryonRich(const char* filename) {
   ifstream fin(filename);
   fin >> ApN >> AtN >> EkinN >> trl >> tfreg >> pibint >> interEoS >> nroN >>
       Lpercell >> dxdz >> dxdt >> Lnucl >> ieos >> edefr0 >> ehdfr0 >> RpN >>
@@ -60,12 +63,21 @@ BaryonRich::BaryonRich(char* filename) {
     fin >> ifluid[i] >> x[i] >> y[i] >> z[i] >> Timeb[i] >> px[i] >> py[i] >>
         pz[i] >> Tbp[i] >> Chb[i] >> dNbp[i] >> Ebp[i] >> Chsb[i] >> Pbp[i] >>
         Qbp[i] >> Rpfl[i];
+    // change units: space-time [fm], velocity [c], T, mu [GeV], densities [1/fm^3],
+    // energy density, pressure [GeV/fm^3]
+    Tbp[i] = Tbp[i]*0.001;
+    dNbp[i] = dNbp[i]*n0;
+    Ebp[i] = Ebp[i]*n0*Mn;
+    Chb[i] = Chb[i]*0.001;
+    Chsb[i] = Chsb[i]*0.001;
+    Pbp[i] = Pbp[i]*n0*Mn;
+    Qbp[i] = Qbp[i]*n0;
     // cout<<setw(14)<<ifluid[i]<<setw(14)<<x[i]<<setw(14)<<y[i]<<setw(14)<<z[i]<<setw(14)<<
     // px[i]<<setw(14)<<py[i]<<setw(14)<<pz[i]<<endl;
   }
 }
 
-Fireball::Fireball(char* filename) {
+Fireball::Fireball(const char* filename) {
   ifstream fin(filename);
   fin >> ApP >> AtP >> EkinP >> trlP >> tfregP >> pibintP >> interEoSp >>
       nroP >> Lpercell >> dxdz >> dxdt >> Lnucl >> ieosP >> edefr0P >>
@@ -112,6 +124,11 @@ Fireball::Fireball(char* filename) {
   for (int j = 0; j < Jpi; j++) {
     fin >> xpi[j] >> ypi[j] >> zpi[j] >> Timepi[j] >> pxpi[j] >> pypi[j] >>
         pzpi[j] >> eppi[j] >> Vpip[j] >> Tpip[j] >> Etpip[j];
+    // change units: space-time [fm], velocity [c], T, mu [GeV], densities [1/fm^3],
+    // energy density, pressure [GeV/fm^3]
+    eppi[j] = eppi[j]*n0*Mn;
+    Tpip[j] = Tpip[j]*0.001;
+    Etpip[j] = Etpip[j]*0.001;
     // cout<<setw(14)<<xpi[j]<<setw(14)<<ypi[j]<<setw(14)<<zpi[j]<<setw(14)<<
     // pxpi[j]<<setw(14)<<pypi[j]<<setw(14)<<pzpi[j]<<endl;
   }
