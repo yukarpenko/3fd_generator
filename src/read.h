@@ -1,6 +1,25 @@
 #include <cmath>
 
-class BaryonRich {
+class Surface{
+ public:
+  Surface() {};
+  virtual int getN(void) = 0;
+  virtual float getX(int i) = 0;
+  virtual float getY(int i) = 0;
+  virtual float getZ(int i) = 0;
+  virtual float getT(int i) = 0;
+  virtual float getVx(int i) = 0;
+  virtual float getVy(int i) = 0;
+  virtual float getVz(int i) = 0;
+  virtual float getTemp(int i) = 0;
+  virtual float getMuB(int i) = 0;
+  virtual float getMuS(int i) = 0;
+  virtual float getVol(int i) = 0;
+  virtual float getEps(int i) = 0;
+  virtual float getRpfl(int i) = 0;
+};
+
+class BaryonRich : public Surface {
   float ApN, AtN, EkinN, trl, dxdz, dxdt, edefr0, ehdfr0, RpN, RtN, hxN, hyN,
       hzN, dtN, hxmin, hymin, hzmin, dtmin, hxnew, hynew, hznew, dtnew, uN, guN,
       V0N, g0N, RoN, RoiN, NML, timefrz, Qp, Qt, dvofr, alf0, gamh, beta, strm,
@@ -14,23 +33,24 @@ class BaryonRich {
   int *ifluid;
 public:
   BaryonRich(const char *filename);
-  inline int getN(void) { return Nptot; }
-  inline float getX(int i) { return x[i]; }
-  inline float getY(int i) { return y[i]; }
-  inline float getZ(int i) { return z[i]; }
-  inline float getT(int i) { return Timeb[i]; }
-  inline float getVx(int i) { return px[i]; }
-  inline float getVy(int i) { return py[i]; }
-  inline float getVz(int i) { return pz[i]; }
-  inline float getTemp(int i) { return Tbp[i]; }
-  inline float getMuB(int i) { return Chb[i]; }
-  inline float getMuS(int i) { return Chsb[i]; }
-  inline float getVol(int i) { return Qbp[i]/fabs(dNbp[i]); }  // fm^3
-  inline float getRpfl(int i) { return Rpfl[i]; } // concentration, <= 1
+  virtual inline int getN(void) { return Nptot; }
+  virtual inline float getX(int i) { return x[i]; }
+  virtual inline float getY(int i) { return y[i]; }
+  virtual inline float getZ(int i) { return z[i]; }
+  virtual inline float getT(int i) { return Timeb[i]; }
+  virtual inline float getVx(int i) { return px[i]; }
+  virtual inline float getVy(int i) { return py[i]; }
+  virtual inline float getVz(int i) { return pz[i]; }
+  virtual inline float getTemp(int i) { return Tbp[i]; }
+  virtual inline float getMuB(int i) { return Chb[i]; }
+  virtual inline float getMuS(int i) { return Chsb[i]; }
+  virtual inline float getVol(int i) { return Qbp[i]/fabs(dNbp[i]); }  // fm^3
+  virtual inline float getEps(int i) { return Ebp[i]; }
+  virtual inline float getRpfl(int i) { return Rpfl[i]; } // concentration, <= 1
 };
 
 
-class Fireball {
+class Fireball : public Surface {
   float ApP, AtP, EkinP, trlP, dxdz, dxdt, edefr0P, ehdfr0P, RpP, RtP, hxP, hyP,
       hzP, dtP, uP, guP, V0P, g0P, taupif, dvofr, alf0, RoP, RoiP, timefrzP,
       hxmin, hymin, hzmin, dtmin, hxnew, hynew, hznew, dtnew, gamh, betaP,
@@ -43,15 +63,18 @@ class Fireball {
       *Etpip;
  public:
   Fireball(const char *filename);
-  inline int getN(void) { return Jpi; }
-  inline float getX(int i) { return xpi[i]; }
-  inline float getY(int i) { return ypi[i]; }
-  inline float getZ(int i) { return zpi[i]; }
-  inline float getT(int i) { return Timepi[i]; }
-  inline float getVx(int i) { return pxpi[i]; }
-  inline float getVy(int i) { return pypi[i]; }
-  inline float getVz(int i) { return pzpi[i]; }
-  inline float getTemp(int i) { return Tpip[i]; }
-  inline float getVol(int i) { return Vpip[i]; }
-  inline float getEps(int i) { return eppi[i]; }
+  virtual inline int getN(void) { return Jpi; }
+  virtual inline float getX(int i) { return xpi[i]; }
+  virtual inline float getY(int i) { return ypi[i]; }
+  virtual inline float getZ(int i) { return zpi[i]; }
+  virtual inline float getT(int i) { return Timepi[i]; }
+  virtual inline float getVx(int i) { return pxpi[i]; }
+  virtual inline float getVy(int i) { return pypi[i]; }
+  virtual inline float getVz(int i) { return pzpi[i]; }
+  virtual inline float getTemp(int i) { return Tpip[i]; }
+  virtual inline float getMuB(int i) { return 0.0; }
+  virtual inline float getMuS(int i) { return 0.0; }
+  virtual inline float getVol(int i) { return Vpip[i]; }
+  virtual inline float getEps(int i) { return eppi[i]; }
+  virtual inline float getRpfl(int i) { return 1.0; } // concentration, <= 1
 };

@@ -11,7 +11,7 @@ void readpt_(void);
 }
 
 int main() {
- TRandom3 * rnd = new TRandom3() ;
+ TRandom3 * rnd = new TRandom3();
  rnd->SetSeed(1234);
  DatabasePDG2 *database = new DatabasePDG2("Tb/ptl3.data","Tb/dky3.mar.data");
  database->LoadData();
@@ -20,12 +20,13 @@ int main() {
 	database->SortParticlesByMass() ;
 	database->CorrectBranching() ;
  // readpt_() ;
-  BaryonRich br("Au30mix_i1_Bps.dat");
- // Fireball("Au30mix_i1_Fps.dat")
- Generator *gen = new Generator(rnd,database) ;
- gen->generate(&br, 1);
+  BaryonRich surf("Au30mix_i1_Bps.dat");
+ // Fireball surf("Au30mix_i1_Fps.dat");
+ Generator *gen = new Generator(rnd,database);
+ gen->generate(&surf, 1);
 //---- cleanup
- delete rnd ;
+ delete rnd;
+ delete database;
  return 0;
  }
  

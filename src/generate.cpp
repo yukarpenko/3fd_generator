@@ -41,7 +41,7 @@ Generator::Generator(TRandom *rndIn, DatabasePDG2 *dbsIn)
 }
 
 
-int Generator::generate(BaryonRich *bf, int NEVENTS)
+int Generator::generate(Surface *su, int NEVENTS)
 {
  const double c1 = pow(1./2./hbarC/TMath::Pi(),3.0) ;
  double totalDensity ; // sum of all thermal densities
@@ -56,22 +56,22 @@ int Generator::generate(BaryonRich *bf, int NEVENTS)
  double cumulantDensity [NPART] ;
 
  // first baryon-rich fluids
- for(int iel=0; iel<bf->getN(); iel++){ // loop over all elements
+ for(int iel=0; iel<su->getN(); iel++){ // loop over all elements
   // ---> thermal densities, for each surface element
    totalDensity = 0.0 ;
-   if(bf->getTemp(iel)<=0.){ ntherm_fail++ ; continue ; }
+   if(su->getTemp(iel)<=0.){ ntherm_fail++ ; continue ; }
    for(int ip=0; ip<NPART; ip++){
     double density = 0. ;
     ParticlePDG2 *particle = database->GetPDGParticleByIndex(ip) ;
     const double mass = particle->GetMass() ;
     const double J = particle->GetSpin() ;
     const double stat = int(2.*J) & 1 ? -1. : 1. ;
-    const double muf = particle->GetBaryonNumber()*bf->getMuB(iel)
-     + particle->GetStrangeness()*bf->getMuS(iel); // and NO electric chem.pot.
+    const double muf = particle->GetBaryonNumber()*su->getMuB(iel)
+     + particle->GetStrangeness()*su->getMuS(iel); // and NO electric chem.pot.
     for(int i=1; i<11; i++)
     density += (2.*J+1.)*pow(gevtofm,3)/(2.*pow(TMath::Pi(),2))*mass*mass
-    *bf->getTemp(iel)*pow(stat,i+1)*TMath::BesselK(2,i*mass/bf->getTemp(iel))
-    *exp(i*muf/bf->getTemp(iel))/i ;
+    *su->getTemp(iel)*pow(stat,i+1)*TMath::BesselK(2,i*mass/su->getTemp(iel))
+    *exp(i*muf/su->getTemp(iel))/i ;
     if(ip>0) cumulantDensity[ip] = cumulantDensity[ip-1] + density ;
         else cumulantDensity[ip] = density ;
     totalDensity += density ;
@@ -81,7 +81,7 @@ int Generator::generate(BaryonRich *bf, int NEVENTS)
    //cout<<cumulantDensity[NPART-1]<<" = "<<totalDensity<<endl ;
  // ---< end thermal densities calc
   // dvEff = dsigma_mu * u^mu
-  double dvEff = bf->getVol(iel) ;
+  double dvEff = su->getVol(iel) ;
   for(int ievent=0; ievent<NEVENTS; ievent++){
   // ---- number of particles to generate
   int nToGen = 0 ;
@@ -100,25 +100,25 @@ int Generator::generate(BaryonRich *bf, int NEVENTS)
    const double J = part->GetSpin() ;
    const double mass = part->GetMass() ;
    const double stat = int(2.*J) & 1 ? -1. : 1. ;
-   const double muf = part->GetBaryonNumber()*bf->getMuB(iel)
-    + part->GetStrangeness()*bf->getMuS(iel); // and NO electric chem.pot.
+   const double muf = part->GetBaryonNumber()*su->getMuB(iel)
+    + part->GetStrangeness()*su->getMuS(iel); // and NO electric chem.pot.
    if(muf>=mass) cout << " ^^ muf = " << muf << "  " << part->GetPDG() << endl ;
-   fthermal->SetParameters(bf->getTemp(iel),muf,mass,stat) ;
+   fthermal->SetParameters(su->getTemp(iel),muf,mass,stat) ;
    //const double dfMax = part->GetFMax() ;
    const double p = fthermal->GetRandom() ;
    const double phi = 2.0*TMath::Pi()*rnd->Rndm() ;
    const double sinth = -1.0 + 2.0*rnd->Rndm() ;
    mom.SetPxPyPzE(p*sqrt(1.0-sinth*sinth)*cos(phi),
      p*sqrt(1.0-sinth*sinth)*sin(phi), p*sinth, sqrt(p*p+mass*mass) ) ;
-   mom.Boost(bf->getVx(iel),bf->getVy(iel),bf->getVz(iel)) ;
-   acceptParticle(ievent,part, bf->getX(iel), bf->getY(iel), bf->getZ(iel),
-     bf->getT(iel), mom.Px(), mom.Py(), mom.Pz(), mom.E()) ;
+   mom.Boost(su->getVx(iel),su->getVy(iel),su->getVz(iel)) ;
+   acceptParticle(ievent,part, su->getX(iel), su->getY(iel), su->getZ(iel),
+     su->getT(iel), mom.Px(), mom.Py(), mom.Pz(), mom.E()) ;
   } // coordinate accepted
   } // events loop
-  if(iel%(bf->getN()/50)==0) cout<<setw(3)<<(iel*100)/bf->getN()<<"%, "<<setw(13)
-  <<dvEff<<setw(13)<<totalDensity<<setw(13)<<bf->getTemp(iel)<<setw(13)<<bf->getMuB(iel)<<endl ;
+  if(iel%(su->getN()/50)==0) cout<<setw(3)<<(iel*100)/su->getN()<<"%, "<<setw(13)
+  <<dvEff<<setw(13)<<totalDensity<<setw(13)<<su->getTemp(iel)<<setw(13)<<su->getMuB(iel)<<endl ;
  } // loop over all elements
  cout << "therm_failed elements: " <<ntherm_fail << endl ;
- return npart[0] ;
  delete fthermal ;
+ return npart[0] ;
 }
