@@ -14,6 +14,7 @@
 #include "DatabasePDG2.h"
 #include "read.h"
 #include "generate.h"
+#include "tree.h"
 
 using namespace std ;
 
@@ -27,11 +28,10 @@ double ffthermal(double *x, double *par)
 }
 
 
-void acceptParticle(int ievent, ParticlePDG2 *ldef, double lx, double ly,
- double lz, double lt, double lpx, double lpy, double lpz, double lE)
-{
-  cout << "accepted: "<<setw(20)<<ldef->GetName()<<endl ;
-}
+//void acceptParticle(int ievent, Particle pp)
+//{
+  //cout << "accepted: "<<setw(20)<<ldef->GetName()<<endl ;
+//}
 
 
 Generator::Generator(TRandom *rndIn, DatabasePDG2 *dbsIn)
@@ -41,8 +41,15 @@ Generator::Generator(TRandom *rndIn, DatabasePDG2 *dbsIn)
 }
 
 
+Generator::~Generator()
+{
+ delete tree;
+}
+
+
 int Generator::generate(Surface *su, int NEVENTS)
 {
+ tree = new MyTree("out",NEVENTS) ;
  const double c1 = pow(1./2./hbarC/TMath::Pi(),3.0) ;
  double totalDensity ; // sum of all thermal densities
  TF1 *fthermal = new TF1("fthermal",ffthermal,0.0,10.0,4) ;
@@ -111,14 +118,19 @@ int Generator::generate(Surface *su, int NEVENTS)
    mom.SetPxPyPzE(p*sqrt(1.0-sinth*sinth)*cos(phi),
      p*sqrt(1.0-sinth*sinth)*sin(phi), p*sinth, sqrt(p*p+mass*mass) ) ;
    mom.Boost(su->getVx(iel),su->getVy(iel),su->getVz(iel)) ;
-   acceptParticle(ievent,part, su->getX(iel), su->getY(iel), su->getZ(iel),
-     su->getT(iel), mom.Px(), mom.Py(), mom.Pz(), mom.E()) ;
+   Particle *pp = new Particle( su->getX(iel), su->getY(iel), su->getZ(iel),
+     su->getT(iel), mom.Px(), mom.Py(), mom.Pz(), mom.E(), part->GetPDG(), 0,
+     part->GetBaryonNumber(), part->GetElectricCharge(), part->GetStrangeness() ) ;
+     //acceptParticle(ievent, pp) ;
+     tree->add(ievent, pp) ;
   } // coordinate accepted
   } // events loop
   if(iel%(su->getN()/50)==0) cout<<setw(3)<<(iel*100)/su->getN()<<"%, "<<setw(13)
   <<dvEff<<setw(13)<<totalDensity<<setw(13)<<su->getTemp(iel)<<setw(13)<<su->getMuB(iel)<<endl ;
  } // loop over all elements
  cout << "therm_failed elements: " <<ntherm_fail << endl ;
+ // fill the tree
+ for(int iev=0; iev<NEVENTS; iev++) tree->fill(iev) ;
  delete fthermal ;
  return npart[0] ;
 }

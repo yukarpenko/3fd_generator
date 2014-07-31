@@ -1,14 +1,10 @@
 #include <iostream>
 #include <TRandom3.h>
+#include <TFile.h>
 #include "DatabasePDG2.h"
 #include "read.h"
 #include "generate.h"
 
-extern "C" {
-void froutine_(void);
-void finit_(void);
-void readpt_(void);
-}
 
 int main() {
  TRandom3 * rnd = new TRandom3();
@@ -19,13 +15,16 @@ int main() {
 //	database->SetWidthRange(0., 10.0);
 	database->SortParticlesByMass() ;
 	database->CorrectBranching() ;
- // readpt_() ;
+ TFile file ("output.root","recreate");
   BaryonRich surf("Au30mix_i1_Bps.dat");
  // Fireball surf("Au30mix_i1_Fps.dat");
  Generator *gen = new Generator(rnd,database);
- gen->generate(&surf, 1);
-//---- cleanup
+ gen->generate(&surf, 200);
+ file.Write();
+ file.Close();
+ //---- cleanup
  delete rnd;
+ delete gen;
  delete database;
  return 0;
  }

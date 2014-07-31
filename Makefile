@@ -1,16 +1,16 @@
 
 CXX           = g++
 F             = gfortran
-CXXFLAGS      = -fPIC -g $(shell root-config --cflags)
+CXXFLAGS      = -fPIC -O3 -march=native $(shell root-config --cflags)
 LD            = g++
 LDFLAGS       = -g
-FFLAGS        = -lgfortran -g
+FFLAGS        = -lgfortran -O3 -march=native
 
 LIBS          = $(SYSLIBS) $(shell root-config --libs)
 GLIBS         = $(SYSLIBS)
 
 vpath %.cpp src
-SRC        = main.cpp read.cpp generate.cpp ParticlePDG2.cpp DecayChannel.cpp DatabasePDG2.cpp
+SRC        = main.cpp read.cpp generate.cpp tree.cpp ParticlePDG2.cpp DecayChannel.cpp DatabasePDG2.cpp
 
 OBJS       = $(patsubst %.cpp,obj/%.o,$(SRC)) 
               
