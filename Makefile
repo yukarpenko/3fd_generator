@@ -10,7 +10,7 @@ LIBS          = $(SYSLIBS) $(shell root-config --libs)
 GLIBS         = $(SYSLIBS)
 
 vpath %.cpp src
-SRC        = main.cpp read.cpp generate.cpp tree.cpp ParticlePDG2.cpp DecayChannel.cpp DatabasePDG2.cpp
+SRC        = main.cpp read.cpp generate.cpp cascade.cpp UKUtility.cpp tree.cpp ParticlePDG2.cpp DecayChannel.cpp DatabasePDG2.cpp
 
 OBJS       = $(patsubst %.cpp,obj/%.o,$(SRC)) 
               

@@ -14,6 +14,7 @@
 #include "DatabasePDG2.h"
 #include "read.h"
 #include "generate.h"
+#include "cascade.h"
 #include "tree.h"
 
 using namespace std ;
@@ -26,12 +27,6 @@ double ffthermal(double *x, double *par)
   double &stat = par[3] ;
   return x[0]*x[0]/( exp((sqrt(x[0]*x[0]+mass*mass)-mu)/T) - stat ) ;
 }
-
-
-//void acceptParticle(int ievent, Particle pp)
-//{
-  //cout << "accepted: "<<setw(20)<<ldef->GetName()<<endl ;
-//}
 
 
 Generator::Generator(TRandom *rndIn, DatabasePDG2 *dbsIn)
@@ -49,6 +44,10 @@ Generator::~Generator()
 
 int Generator::generate(Surface *su, int NEVENTS)
 {
+ ptls.resize(NEVENTS);
+ for(int i=0; i<NEVENTS; i++) ptls.at(i).reserve(1000);
+ cout<<"vector size "<<ptls.size()<<endl;
+ cout<<"vector contents "<<ptls[0][0]<<" "<<ptls[0][1]<<endl;
  tree = new MyTree("out",NEVENTS) ;
  const double c1 = pow(1./2./hbarC/TMath::Pi(),3.0) ;
  double totalDensity ; // sum of all thermal densities
@@ -119,18 +118,65 @@ int Generator::generate(Surface *su, int NEVENTS)
      p*sqrt(1.0-sinth*sinth)*sin(phi), p*sinth, sqrt(p*p+mass*mass) ) ;
    mom.Boost(su->getVx(iel),su->getVy(iel),su->getVz(iel)) ;
    Particle *pp = new Particle( su->getX(iel), su->getY(iel), su->getZ(iel),
-     su->getT(iel), mom.Px(), mom.Py(), mom.Pz(), mom.E(), part->GetPDG(), 0,
-     part->GetBaryonNumber(), part->GetElectricCharge(), part->GetStrangeness() ) ;
-     //acceptParticle(ievent, pp) ;
-     tree->add(ievent, pp) ;
+     su->getT(iel), mom.Px(), mom.Py(), mom.Pz(), mom.E(), part, 0) ;
+     //tree->add(ievent, pp) ;
+     ptls[ievent].push_back(pp);
   } // coordinate accepted
   } // events loop
   if(iel%(su->getN()/50)==0) cout<<setw(3)<<(iel*100)/su->getN()<<"%, "<<setw(13)
   <<dvEff<<setw(13)<<totalDensity<<setw(13)<<su->getTemp(iel)<<setw(13)<<su->getMuB(iel)<<endl ;
  } // loop over all elements
+ tree->passVector(ptls);
  cout << "therm_failed elements: " <<ntherm_fail << endl ;
  // fill the tree
- for(int iev=0; iev<NEVENTS; iev++) tree->fill(iev) ;
+ for(int iev=0; iev<NEVENTS; iev++){
+  decayResonances(iev);
+  tree->fill(iev);
+ }
  delete fthermal ;
  return npart[0] ;
+}
+
+
+// here we decay unstable particles
+void Generator::decayResonances(int iev)
+{
+// if(rescatter) // no UrQMD here
+// urqmdmain_() ;
+//===== decay of unstable resonances ========
+for(int iiter=0; iiter<3; iiter++){
+
+ for(int ipart=0; ipart<ptls[iev].size(); ipart++){
+ Particle* p = ptls[iev][ipart] ;
+ if(p->def==0) { cout << "unknown particle: " << p->def->GetPDG() << endl ; continue ; }
+ if(p->def->GetWidth()>0. && !isStable(p->def->GetPDG())){
+  p->x = p->x  + p->px/p->E*(400. - p->t) ;
+  p->y = p->y  + p->py/p->E*(400. - p->t) ;
+  p->z = p->z  + p->pz/p->E*(400. - p->t) ;
+  p->t = 400. ;
+#ifdef DEBUG2
+  cout << "------ unstable particle decay " << Id[i] << endl ;
+  cout << setw(14) << "px" << setw(14) << "py" << setw(14) << "pz" << setw(14) << "E" << setw(14) << "m" << endl ;
+  cout << setw(14) << mom[0] << setw(14) << mom[1] << setw(14) << mom[2] << setw(14) << mom[3] << setw(14) << mom[4] << endl ;
+#endif
+  int nprod ;
+  Particle** daughters ;
+  decay(p, nprod, daughters) ;
+#ifdef DEBUG2
+  cout << "decay into : " ; for(int iprod=0; iprod<nprod; iprod++) cout << "  " << ppid[iprod] ;
+  cout << endl ;
+  for(int iprod=0; iprod<nprod; iprod++)
+   cout << setw(14) << pmom[iprod][0] << setw(14) << pmom[iprod][1] << setw(14) << pmom[iprod][2] << setw(14) << pmom[iprod][3] << setw(14) << pmom[iprod][4] << endl ;
+#endif
+ //------------------ adding daughters to list (daughter #0 replaces original particle)
+  ptls[iev][ipart] = daughters[0] ;
+  for(int iprod=1; iprod<nprod; iprod++){
+    ptls[iev].push_back(daughters[iprod]) ;
+  }
+  delete [] daughters ;
+//--------------------------------------------
+  } // decay procedure
+ }
+ 
+ } // decay iteration
 }

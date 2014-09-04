@@ -8,12 +8,6 @@ using namespace std ;
 
 MyTree::MyTree(const char *name, int nevents)
 {
- ptls = new Particle** [nevents] ;
- npart =  new Int_t [nevents] ;
- for(int i=0; i<nevents; i++){
-  ptls[i]  = new Particle* [nBuf] ;
-  npart[i] = 0 ;
- }
  // buffers to link to TTree object
  X  = new Double_t [nBuf] ;
  Y  = new Double_t [nBuf] ;
@@ -49,12 +43,6 @@ MyTree::MyTree(const char *name, int nevents)
 
 MyTree::~MyTree()
 {
- //tree->FlushBaskets() ;
- //tree->Write() ;
- for(int i=0; i<nevents; i++){
-  delete [] ptls[i] ;
- }
- delete [] ptls ;
  delete [] X ;
  delete [] Y ;
  delete [] Z ;
@@ -72,27 +60,10 @@ MyTree::~MyTree()
 }
 
 
-void MyTree::add(int iev, Particle* p)
-{
- ptls[iev][npart[iev]] = p ;
- npart[iev]++ ;
- if(npart[iev]>nBuf-1){
-  cout<<"please increase nBuf; exiting\n" ;
-  exit(1) ;
- }
-}
-
-
-void MyTree::reset()
-{
- for(int iev=0; iev<nevents; iev++) npart[iev]=0 ;
-}
-
-
 void MyTree::fill(int iev)
 {
-  Npart = npart[iev] ;
- for(int ipart=0; ipart<npart[iev]; ipart++){
+  Npart = ptls[iev].size() ;
+ for(int ipart=0; ipart<Npart; ipart++){
    X[ipart] = ptls[iev][ipart]->x ;
    Y[ipart] = ptls[iev][ipart]->y ;
    Z[ipart] = ptls[iev][ipart]->z ;
@@ -101,11 +72,12 @@ void MyTree::fill(int iev)
   Py[ipart] = ptls[iev][ipart]->py ;
   Pz[ipart] = ptls[iev][ipart]->pz ;
    E[ipart] = ptls[iev][ipart]->E ;
-  Id[ipart] = ptls[iev][ipart]->id ;
+  Id[ipart] = ptls[iev][ipart]->def->GetPDG() ;
  MId[ipart] = ptls[iev][ipart]->mid ;
- Ele[ipart] = ptls[iev][ipart]->ele ;
- Bar[ipart] = ptls[iev][ipart]->bar ;
-Strg[ipart] = ptls[iev][ipart]->strg ;
+ Ele[ipart] = ptls[iev][ipart]->def->GetElectricCharge() ;
+ Bar[ipart] = ptls[iev][ipart]->def->GetBaryonNumber() ;
+Strg[ipart] = ptls[iev][ipart]->def->GetStrangeness() ;
  }
  tree->Fill() ;
+ //cout<<"tree: filled "<<Npart<<" particles\n";
 }
