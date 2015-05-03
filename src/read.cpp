@@ -48,6 +48,7 @@ BaryonRich::BaryonRich(const char* filename) {
        << gamq << setw(14) << betaq << setw(14) << iextraq << setw(14) << Qbstop
        << setw(14) << spectat << setw(14) << Npmin << setw(14) << Npmax
        << setw(14) << Nptot << endl;
+  cout << "impact param = " << RoN << endl;
 
   if (Nptot > 10000000) {
     cout << "Nptot too large: " << Nptot << endl;

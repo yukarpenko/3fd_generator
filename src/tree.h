@@ -37,8 +37,8 @@ class MyTree{
 public:
  MyTree(const char *name, int nevents) ;
  ~MyTree() ;
- void add(int iev, Particle*  p) ;
- void reset() ;
+// void add(int iev, Particle*  p) ;
+// void reset() ;
  void fill(int iev) ;
  void passVector(std::vector<std::vector<Particle*> > &vect) { ptls=vect; }
 } ;

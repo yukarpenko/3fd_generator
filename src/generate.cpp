@@ -54,7 +54,7 @@ Generator::~Generator()
 }
 
 
-int Generator::generate(Surface *su, int NEVENTS)
+void Generator::generate(Surface *su, int NEVENTS)
 {
  ptls.resize(NEVENTS);
  for(int i=0; i<NEVENTS; i++) ptls.at(i).reserve(1000);
@@ -65,8 +65,6 @@ int Generator::generate(Surface *su, int NEVENTS)
  double totalDensity ; // sum of all thermal densities
  TF1 *fthermal = new TF1("fthermal",ffthermal,0.0,10.0,4) ;
  TLorentzVector mom ;
- npart = new int [NEVENTS] ;
- for(int iev=0; iev<NEVENTS; iev++) npart[iev] = 0 ;
  int nmaxiter = 0 ;
  int ntherm_fail=0 ;
  const int NPART = database->GetNParticles() ;
@@ -123,6 +121,10 @@ int Generator::generate(Surface *su, int NEVENTS)
    if(muf>=mass) cout << " ^^ muf = " << muf << "  " << part->GetPDG() << endl ;
    fthermal->SetParameters(su->getTemp(iel),muf,mass,stat) ;
    //const double dfMax = part->GetFMax() ;
+   double weight = 1.0 ;
+   //if(part->GetBaryonNumber()==0 && part->GetStrangeness()==0)
+   // weight = su->getRpfl(iel) ;
+   //if(rnd->Rndm()<=weight){
    const double p = fthermal->GetRandom() ;
    const double phi = 2.0*TMath::Pi()*rnd->Rndm() ;
    const double sinth = -1.0 + 2.0*rnd->Rndm() ;
@@ -131,22 +133,28 @@ int Generator::generate(Surface *su, int NEVENTS)
    mom.Boost(su->getVx(iel),su->getVy(iel),su->getVz(iel)) ;
    Particle *pp = new Particle( su->getX(iel), su->getY(iel), su->getZ(iel),
      su->getT(iel), mom.Px(), mom.Py(), mom.Pz(), mom.E(), part, 0) ;
+   // generate the same particle with y->-y, py->-py. Bad, so for test purposes only
+   Particle *pp2 = new Particle( su->getX(iel), -su->getY(iel), su->getZ(iel),
+     su->getT(iel), mom.Px(), -mom.Py(), mom.Pz(), mom.E(), part, 0) ;
      //tree->add(ievent, pp) ;
      ptls[ievent].push_back(pp);
-  } // coordinate accepted
+     ptls[ievent].push_back(pp2);
+   //} // accepted according to the weight
+  } // we generate a particle
   } // events loop
   if(iel%(su->getN()/50)==0) cout<<setw(3)<<(iel*100)/su->getN()<<"%, "<<setw(13)
   <<dvEff<<setw(13)<<totalDensity<<setw(13)<<su->getTemp(iel)<<setw(13)<<su->getMuB(iel)<<endl ;
  } // loop over all elements
- tree->passVector(ptls);
  cout << "therm_failed elements: " <<ntherm_fail << endl ;
  // fill the tree
  for(int iev=0; iev<NEVENTS; iev++){
   decayResonances(iev);
+ }
+ tree->passVector(ptls);
+ for(int iev=0; iev<NEVENTS; iev++){
   tree->fill(iev);
  }
  delete fthermal ;
- return npart[0] ;
 }
 
 

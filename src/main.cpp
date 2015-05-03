@@ -29,11 +29,11 @@ int main() {
 //	database->SetWidthRange(0., 10.0);
 	database->SortParticlesByMass() ;
 	database->CorrectBranching() ;
- TFile file ("outputF_res.root","recreate");
+ TFile file ("outputF_res_noRpfl_full.root","recreate");
  //BaryonRich surf("Au30mix_i1_Bps.dat");
  Fireball surf("Au30mix_i1_Fps.dat");
  Generator *gen = new Generator(rnd,database);
- gen->generate(&surf, 2000);
+ gen->generate(&surf, 20000);
  file.Write("",TObject::kOverwrite);
  file.Close();
  //---- cleanup
