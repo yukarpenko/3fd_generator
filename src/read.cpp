@@ -13,6 +13,7 @@
 #include <iostream>
 #include <fstream>
 #include <iomanip>
+#include <cstdlib>
 #include "read.h"
 
 using namespace std;
@@ -142,6 +143,14 @@ Fireball::Fireball(const char* filename) {
     eppi[j] = eppi[j]*n0*Mn;
     Tpip[j] = Tpip[j]*0.001;
     Etpip[j] = Etpip[j]*0.001;
+    Vpip[j] = Vpip[j] / sqrt(1.0 - pxpi[j] * pxpi[j] - pypi[j] * pypi[j]
+     - pzpi[j] * pzpi[j]);
+    if(Vpip[j] != Vpip[j]){
+     cout << "Fireball init: gamma factor goes imaginary:\n";
+     cout << setw(14) << pxpi[j] << setw(14) << pypi[j] << setw(14) << pzpi[j]
+       << endl;
+     exit(1);
+    }
     // cout<<setw(14)<<xpi[j]<<setw(14)<<ypi[j]<<setw(14)<<zpi[j]<<setw(14)<<
     // pxpi[j]<<setw(14)<<pypi[j]<<setw(14)<<pzpi[j]<<endl;
   }
