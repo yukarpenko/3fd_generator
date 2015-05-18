@@ -26,7 +26,7 @@ using std::ofstream;
 using std::strcpy;
 using std::strcat;
 
-const bool weakContribution = true ;
+const bool weakContribution = false ;
 int rnegative ; // negative factorial argument flag - for Clebsch-Gordan coeff. calculation
 
 bool isStable(int pdg) ;
@@ -800,14 +800,16 @@ Int_t DatabasePDG2::GetNAllowedChannels(ParticlePDG2 *particle, Double_t motherM
 
 bool isStable(int pdg)
 {
+  const int stable_weak_list [] = 
+  {211, 111, 2112, 2212, 311, 321, 221, 333, 3122, 3222, 3112, 3322, 3312, 3334};
   if(weakContribution){
   if(abs(pdg)==211 || abs(pdg)==111 || abs(pdg)==2112 || abs(pdg)==2212 || abs(pdg)==311 || abs(pdg)==321) return true ; // +3212 originally, +3122 for Lambda/K0 analysis
   else return false ;
   }
-  else{
-  if(abs(pdg)==211 || abs(pdg)==111 || abs(pdg)==2112 || abs(pdg)==2212 || abs(pdg)==311 || abs(pdg)==321 || abs(pdg)==9000221
-  || abs(pdg)==3322 || abs(pdg)==3312 || abs(pdg)==3122 || /*abs(pdg)==3222 ||*/ abs(pdg)==3212 || abs(pdg)==3112 || abs(pdg)==3334) return true ;
-  else return false ;
+  else{  // weakContribution == false
+  for(int i=0; i<sizeof(stable_weak_list)/sizeof(int); i++)
+    if(abs(pdg)==stable_weak_list[i]) return true ;
+  return false ;
   }
 }
 
