@@ -26,7 +26,7 @@ using std::ofstream;
 using std::strcpy;
 using std::strcat;
 
-const bool weakContribution = false ;
+const bool weakContribution = true ;
 int rnegative ; // negative factorial argument flag - for Clebsch-Gordan coeff. calculation
 
 bool isStable(int pdg) ;
@@ -803,7 +803,7 @@ bool isStable(int pdg)
   const int stable_weak_list [] = 
   {211, 111, 2112, 2212, 311, 321, 221, 333, 3122, 3222, 3112, 3322, 3312, 3334};
   if(weakContribution){
-  if(abs(pdg)==211 || abs(pdg)==111 || abs(pdg)==2112 || abs(pdg)==2212 || abs(pdg)==311 || abs(pdg)==321) return true ; // +3212 originally, +3122 for Lambda/K0 analysis
+  if(abs(pdg)==211 || abs(pdg)==111 || abs(pdg)==2112 || abs(pdg)==2212 || abs(pdg)==311 || abs(pdg)==321) return true ;
   else return false ;
   }
   else{  // weakContribution == false

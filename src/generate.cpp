@@ -122,9 +122,9 @@ void Generator::generate(Surface *su, int NEVENTS)
    fthermal->SetParameters(su->getTemp(iel),muf,mass,stat) ;
    //const double dfMax = part->GetFMax() ;
    double weight = 1.0 ;
-   //if(part->GetBaryonNumber()==0 && part->GetStrangeness()==0)
-   // weight = su->getRpfl(iel) ;
-   //if(rnd->Rndm()<=weight){
+   if(part->GetBaryonNumber()==0 && part->GetStrangeness()==0)
+    weight = su->getRpfl(iel) ;
+   if(rnd->Rndm()<=weight){
    const double p = fthermal->GetRandom() ;
    const double phi = 2.0*TMath::Pi()*rnd->Rndm() ;
    const double sinth = -1.0 + 2.0*rnd->Rndm() ;
@@ -139,7 +139,7 @@ void Generator::generate(Surface *su, int NEVENTS)
      //tree->add(ievent, pp) ;
      ptls[ievent].push_back(pp);
      ptls[ievent].push_back(pp2);
-   //} // accepted according to the weight
+   } // accepted according to the weight
   } // we generate a particle
   } // events loop
   if(iel%(su->getN()/50)==0) cout<<setw(3)<<(iel*100)/su->getN()<<"%, "<<setw(13)
