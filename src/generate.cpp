@@ -79,16 +79,14 @@ void Generator::generate(Surface *su)
  int nmaxiter = 0 ;
  int ntherm_fail=0 ;
  const int NPART = database->GetNParticles() ;
- // particle densities (thermal). Seems to be redundant, but needed for fast generation
- double cumulantDensity [NPART] ;
 
  // first baryon-rich fluids
- #pragma omp parallel
- {
- #pragma omp for
+ #pragma omp parallel for
  for(int iel=0; iel<su->getN(); iel++){ // loop over all elements
   // ---> thermal densities, for each surface element
    totalDensity = 0.0 ;
+   // particle densities (thermal)
+   double cumulantDensity [NPART] ;
    if(su->getTemp(iel)<=0.){ ntherm_fail++ ; continue ; }
    for(int ip=0; ip<NPART; ip++){
     double density = 0. ;
@@ -146,14 +144,15 @@ void Generator::generate(Surface *su)
    mom1.SetPxPyPzE(p*sqrt(1.0-sinth*sinth)*cos(phi),
      p*sqrt(1.0-sinth*sinth)*sin(phi), p*sinth, sqrt(p*p+mass*mass) ) ;
    mom1.Boost(su->getVx(iel),su->getVy(iel),su->getVz(iel)) ;
+
+     //tree->add(ievent, pp) ;
+     #pragma omp critical
+     {
    Particle *pp = new Particle( su->getX(iel), su->getY(iel), su->getZ(iel),
      su->getT(iel), mom1.Px(), mom1.Py(), mom1.Pz(), mom1.E(), part, 0) ;
    // generate the same particle with y->-y, py->-py. Bad, so for test purposes only
    Particle *pp2 = new Particle( su->getX(iel), -su->getY(iel), su->getZ(iel),
      su->getT(iel), mom1.Px(), -mom1.Py(), mom1.Pz(), mom1.E(), part, 0) ;
-     //tree->add(ievent, pp) ;
-     #pragma omp critical
-     {
       ptls[ievent].push_back(pp);
       ptls[ievent].push_back(pp2);
      }
@@ -163,8 +162,8 @@ void Generator::generate(Surface *su)
   if(iel%(su->getN()/50)==0) cout<<setw(3)<<(iel*100)/su->getN()<<"%, "<<setw(13)
   <<dvEff<<setw(13)<<totalDensity<<setw(13)<<su->getTemp(iel)<<setw(13)<<su->getMuB(iel)<<endl ;
  } // loop over all elements
- } // end parallel section
  cout << "therm_failed elements: " <<ntherm_fail << endl ;
+ #pragma omp single
  delete [] fthermal ;
 }
 
@@ -205,8 +204,8 @@ for(int iiter=0; iiter<3; iiter++){
   ptls[iev][ipart] = daughters[0] ;
   for(int iprod=1; iprod<nprod; iprod++){
     ptls[iev].push_back(daughters[iprod]) ;
+    delete daughters[iprod];
   }
-  delete [] daughters ;
 //--------------------------------------------
   } // decay procedure
  }
