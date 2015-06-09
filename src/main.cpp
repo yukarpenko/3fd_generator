@@ -29,11 +29,13 @@ int main() {
 //	database->SetWidthRange(0., 10.0);
 	database->SortParticlesByMass() ;
 	database->CorrectBranching() ;
- TFile file ("outputF_res_noRpfl_full.root","recreate");
- //BaryonRich surf("Au30mix_i1_Bps.dat");
- Fireball surf("Au30mix_i1_Fps.dat");
+ TFile file ("__outputBF_res.root","recreate");
+ BaryonRich surf1("Au30mix_i1_Bps.dat");
+ Fireball surf2("Au30mix_i1_Fps.dat");
  Generator *gen = new Generator(rnd,database);
- gen->generate(&surf, 20000);
+ gen->generate2surf(&surf1, &surf2, 10000);
+ gen->decayResonances();
+ gen->fillTree();
  file.Write("",TObject::kOverwrite);
  file.Close();
  //---- cleanup

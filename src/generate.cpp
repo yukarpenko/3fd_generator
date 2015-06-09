@@ -54,13 +54,21 @@ Generator::~Generator()
 }
 
 
-void Generator::generate(Surface *su, int NEVENTS)
+void Generator::generate2surf(Surface *su1, Surface *su2, int nevents)
 {
+ NEVENTS = nevents;
  ptls.resize(NEVENTS);
  for(int i=0; i<NEVENTS; i++) ptls.at(i).reserve(1000);
- cout<<"vector size "<<ptls.size()<<endl;
- cout<<"vector contents "<<ptls[0][0]<<" "<<ptls[0][1]<<endl;
  tree = new MyTree("out",NEVENTS) ;
+ cout<<"Sampling particles from surface 1\n";
+ generate(su1);
+ cout<<"Sampling particles from surface 2\n";
+ generate(su2);
+}
+
+
+void Generator::generate(Surface *su)
+{
  const double c1 = pow(1./2./hbarC/TMath::Pi(),3.0) ;
  double totalDensity ; // sum of all thermal densities
  TF1 *fthermal = new TF1("fthermal",ffthermal,0.0,10.0,4) ;
@@ -146,21 +154,15 @@ void Generator::generate(Surface *su, int NEVENTS)
   <<dvEff<<setw(13)<<totalDensity<<setw(13)<<su->getTemp(iel)<<setw(13)<<su->getMuB(iel)<<endl ;
  } // loop over all elements
  cout << "therm_failed elements: " <<ntherm_fail << endl ;
- // fill the tree
- for(int iev=0; iev<NEVENTS; iev++){
-  decayResonances(iev);
- }
- tree->passVector(ptls);
- for(int iev=0; iev<NEVENTS; iev++){
-  tree->fill(iev);
- }
  delete fthermal ;
 }
 
 
 // here we decay unstable particles
-void Generator::decayResonances(int iev)
+void Generator::decayResonances()
 {
+cout<<"Decaying resonances\n";
+for(int iev=0; iev<NEVENTS; iev++){
 // if(rescatter) // no UrQMD here
 // urqmdmain_() ;
 //===== decay of unstable resonances ========
@@ -199,4 +201,15 @@ for(int iiter=0; iiter<3; iiter++){
  }
  
  } // decay iteration
+} // events loop
+}
+
+
+void Generator::fillTree()
+{
+ cout<<"Writing trees\n";
+ tree->passVector(ptls);
+ for(int iev=0; iev<NEVENTS; iev++){
+  tree->fill(iev);
+ }
 }
