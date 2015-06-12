@@ -1,10 +1,10 @@
 
 CXX           = g++
 F             = gfortran
-CXXFLAGS      = -fPIC -O3 -march=native $(shell root-config --cflags)
+CXXFLAGS      = -fPIC -g -march=native $(shell root-config --cflags) -fopenmp
 LD            = g++
-LDFLAGS       = -O3
-FFLAGS        = -lgfortran -O3 -march=native
+LDFLAGS       = -g -fopenmp
+FFLAGS        = -lgfortran -g -march=native
 
 LIBS          = $(SYSLIBS) $(shell root-config --libs)
 GLIBS         = $(SYSLIBS)

@@ -21,6 +21,7 @@
 #include <fstream>
 #include <sstream>
 #include <TF1.h>
+#include <omp.h>
 
 #include "const.h"
 #include "DatabasePDG2.h"
@@ -71,8 +72,10 @@ void Generator::generate(Surface *su)
 {
  const double c1 = pow(1./2./hbarC/TMath::Pi(),3.0) ;
  double totalDensity ; // sum of all thermal densities
- TF1 *fthermal = new TF1("fthermal",ffthermal,0.0,10.0,4) ;
- TLorentzVector mom ;
+ TF1 **fthermal = new TF1* [omp_get_max_threads()];
+ for(int i=0; i<omp_get_max_threads(); i++)
+   fthermal[i] = new TF1("fthermal",ffthermal,0.0,10.0,4) ;
+ TLorentzVector mom [omp_get_max_threads()] ;
  int nmaxiter = 0 ;
  int ntherm_fail=0 ;
  const int NPART = database->GetNParticles() ;
@@ -80,6 +83,9 @@ void Generator::generate(Surface *su)
  double cumulantDensity [NPART] ;
 
  // first baryon-rich fluids
+ #pragma omp parallel
+ {
+ #pragma omp for
  for(int iel=0; iel<su->getN(); iel++){ // loop over all elements
   // ---> thermal densities, for each surface element
    totalDensity = 0.0 ;
@@ -127,34 +133,39 @@ void Generator::generate(Surface *su)
    const double muf = part->GetBaryonNumber()*su->getMuB(iel)
     + part->GetStrangeness()*su->getMuS(iel); // and NO electric chem.pot.
    if(muf>=mass) cout << " ^^ muf = " << muf << "  " << part->GetPDG() << endl ;
-   fthermal->SetParameters(su->getTemp(iel),muf,mass,stat) ;
+   fthermal[omp_get_thread_num()]->SetParameters(su->getTemp(iel),muf,mass,stat) ;
    //const double dfMax = part->GetFMax() ;
    double weight = 1.0 ;
    if(part->GetBaryonNumber()==0 && part->GetStrangeness()==0)
     weight = su->getRpfl(iel) ;
    if(rnd->Rndm()<=weight){
-   const double p = fthermal->GetRandom() ;
+   const double p = fthermal[omp_get_thread_num()]->GetRandom() ;
    const double phi = 2.0*TMath::Pi()*rnd->Rndm() ;
    const double sinth = -1.0 + 2.0*rnd->Rndm() ;
-   mom.SetPxPyPzE(p*sqrt(1.0-sinth*sinth)*cos(phi),
+   TLorentzVector& mom1 = mom[omp_get_thread_num()];
+   mom1.SetPxPyPzE(p*sqrt(1.0-sinth*sinth)*cos(phi),
      p*sqrt(1.0-sinth*sinth)*sin(phi), p*sinth, sqrt(p*p+mass*mass) ) ;
-   mom.Boost(su->getVx(iel),su->getVy(iel),su->getVz(iel)) ;
+   mom1.Boost(su->getVx(iel),su->getVy(iel),su->getVz(iel)) ;
    Particle *pp = new Particle( su->getX(iel), su->getY(iel), su->getZ(iel),
-     su->getT(iel), mom.Px(), mom.Py(), mom.Pz(), mom.E(), part, 0) ;
+     su->getT(iel), mom1.Px(), mom1.Py(), mom1.Pz(), mom1.E(), part, 0) ;
    // generate the same particle with y->-y, py->-py. Bad, so for test purposes only
    Particle *pp2 = new Particle( su->getX(iel), -su->getY(iel), su->getZ(iel),
-     su->getT(iel), mom.Px(), -mom.Py(), mom.Pz(), mom.E(), part, 0) ;
+     su->getT(iel), mom1.Px(), -mom1.Py(), mom1.Pz(), mom1.E(), part, 0) ;
      //tree->add(ievent, pp) ;
-     ptls[ievent].push_back(pp);
-     ptls[ievent].push_back(pp2);
+     #pragma omp critical
+     {
+      ptls[ievent].push_back(pp);
+      ptls[ievent].push_back(pp2);
+     }
    } // accepted according to the weight
   } // we generate a particle
   } // events loop
   if(iel%(su->getN()/50)==0) cout<<setw(3)<<(iel*100)/su->getN()<<"%, "<<setw(13)
   <<dvEff<<setw(13)<<totalDensity<<setw(13)<<su->getTemp(iel)<<setw(13)<<su->getMuB(iel)<<endl ;
  } // loop over all elements
+ } // end parallel section
  cout << "therm_failed elements: " <<ntherm_fail << endl ;
- delete fthermal ;
+ delete [] fthermal ;
 }
 
 
