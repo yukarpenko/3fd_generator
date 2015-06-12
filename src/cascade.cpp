@@ -1,3 +1,10 @@
+//*************************************************************
+//
+//  the block below is derived from FASTMC event generator:
+//  N.S. Amelin et al., Phys.Rev. C 74, 064901 (2006)
+//
+//*************************************************************
+
 #include <TRandom3.h>
 #include <iostream>
 #include "cascade.h"

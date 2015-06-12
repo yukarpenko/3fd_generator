@@ -1,3 +1,9 @@
+//*************************************************************
+//
+//  this class is derived from FASTMC event generator:
+//  N.S. Amelin et al., Phys.Rev. C 74, 064901 (2006)
+//
+//*************************************************************
 
 #ifndef PARTICLE_PDG2
 #include "ParticlePDG2.h"

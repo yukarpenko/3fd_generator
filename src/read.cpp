@@ -1,3 +1,15 @@
+//*************************************************************
+//
+//  A Monte Carlo hadron sampling / event generation code 
+//  by Iurii Karpenko
+//  yu.karpenko@gmail.com, karpenko@fias.uni-frankfurt.de
+//
+//  DatabasePDG, ParticlePDG and DecayChannel classes are
+//  derived from FASTMC event generator:
+//  N.S. Amelin et al., Phys.Rev. C 74, 064901 (2006)
+//
+//*************************************************************
+
 #include <iostream>
 #include <fstream>
 #include <iomanip>
