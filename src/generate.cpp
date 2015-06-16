@@ -71,11 +71,10 @@ void Generator::generate2surf(Surface *su1, Surface *su2, int nevents)
 void Generator::generate(Surface *su)
 {
  const double c1 = pow(1./2./hbarC/TMath::Pi(),3.0) ;
- double totalDensity ; // sum of all thermal densities
  TF1 **fthermal = new TF1* [omp_get_max_threads()];
  for(int i=0; i<omp_get_max_threads(); i++)
    fthermal[i] = new TF1("fthermal",ffthermal,0.0,10.0,4) ;
- TLorentzVector mom [omp_get_max_threads()] ;
+ //TLorentzVector mom [omp_get_max_threads()] ;
  int nmaxiter = 0 ;
  int ntherm_fail=0 ;
  const int NPART = database->GetNParticles() ;
@@ -84,7 +83,7 @@ void Generator::generate(Surface *su)
  #pragma omp parallel for
  for(int iel=0; iel<su->getN(); iel++){ // loop over all elements
   // ---> thermal densities, for each surface element
-   totalDensity = 0.0 ;
+   double totalDensity = 0.0 ;
    // particle densities (thermal)
    double cumulantDensity [NPART] ;
    if(su->getTemp(iel)<=0.){ ntherm_fail++ ; continue ; }
@@ -140,7 +139,7 @@ void Generator::generate(Surface *su)
    const double p = fthermal[omp_get_thread_num()]->GetRandom() ;
    const double phi = 2.0*TMath::Pi()*rnd->Rndm() ;
    const double sinth = -1.0 + 2.0*rnd->Rndm() ;
-   TLorentzVector& mom1 = mom[omp_get_thread_num()];
+   TLorentzVector mom1; // = mom[omp_get_thread_num()];
    mom1.SetPxPyPzE(p*sqrt(1.0-sinth*sinth)*cos(phi),
      p*sqrt(1.0-sinth*sinth)*sin(phi), p*sinth, sqrt(p*p+mass*mass) ) ;
    mom1.Boost(su->getVx(iel),su->getVy(iel),su->getVz(iel)) ;
