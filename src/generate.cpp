@@ -31,6 +31,8 @@
 
 using namespace std ;
 
+extern int ievcasc;
+
 double ffthermal(double *x, double *par)
 {
   double &T = par[0] ;
@@ -41,10 +43,11 @@ double ffthermal(double *x, double *par)
 }
 
 
-Generator::Generator(TRandom *rndIn, DatabasePDG2 *dbsIn)
+Generator::Generator(TRandom *rndIn, DatabasePDG2 *dbsIn, bool rescatterIn)
 {
  rnd = rndIn;
  database = dbsIn;
+ rescatter = rescatterIn;
 }
 
 
@@ -144,9 +147,8 @@ void Generator::generate(Surface *su)
    // generate the same particle with y->-y, py->-py. Bad, so for test purposes only
    Particle *pp2 = new Particle( su->getX(iel), -su->getY(iel), su->getZ(iel),
      su->getT(iel), mom.Px(), -mom.Py(), mom.Pz(), mom.E(), part, 0) ;
-     //tree->add(ievent, pp) ;
-     ptls[ievent].push_back(pp);
-     ptls[ievent].push_back(pp2);
+     acceptParticle(ievent,pp);
+     acceptParticle(ievent,pp2);
    } // accepted according to the weight
   } // we generate a particle
   } // events loop
@@ -158,16 +160,43 @@ void Generator::generate(Surface *su)
 }
 
 
+void Generator::acceptParticle(int ievent, Particle *p)
+{
+ int urqmdid, urqmdiso3 ;
+ int lid = p->def->GetPDG() ;
+ pdg2id_(&urqmdid, &urqmdiso3, &lid) ;
+ // if particle is known to UrQMD or we are not using UrQMD and do not bother
+ if((geteposcode_(&lid)!=0 && abs(urqmdid)<1000) || !rescatter){
+  ptls[ievent].push_back(p);
+ }else{ // decay particles unknown to UrQMD
+  int nprod ;
+  Particle** daughters ;
+  decay(p, nprod, daughters) ;
+ //------------------ adding daughters to list (daughter #0 replaces original particle)
+  for(int iprod=0; iprod<nprod; iprod++){
+    int daughterId = p->def->GetPDG() ;
+    int urqmdid, urqmdiso3;
+    pdg2id_(&urqmdid, &urqmdiso3, &daughterId) ;
+    // again, pass product to UrQMD only if UrQMD knows it
+    if(geteposcode_(&daughterId)!=0 && abs(urqmdid)<1000)
+     ptls[ievent].push_back(daughters[iprod]) ;
+  }
+  delete [] daughters ;
+  delete p ;
+ }
+}
+
+
 // here we decay unstable particles
-void Generator::decayResonances()
+void Generator::rescatterDecay()
 {
 cout<<"Decaying resonances\n";
 for(int iev=0; iev<NEVENTS; iev++){
-// if(rescatter) // no UrQMD here
-// urqmdmain_() ;
+ ievcasc = iev;
+ if(rescatter)
+  urqmdmain_();
 //===== decay of unstable resonances ========
 for(int iiter=0; iiter<3; iiter++){
-
  for(int ipart=0; ipart<ptls[iev].size(); ipart++){
  Particle* p = ptls[iev][ipart] ;
  if(p->def==0) { cout << "unknown particle: " << p->def->GetPDG() << endl ; continue ; }
@@ -176,26 +205,16 @@ for(int iiter=0; iiter<3; iiter++){
   p->y = p->y  + p->py/p->E*(400. - p->t) ;
   p->z = p->z  + p->pz/p->E*(400. - p->t) ;
   p->t = 400. ;
-#ifdef DEBUG2
-  cout << "------ unstable particle decay " << Id[i] << endl ;
-  cout << setw(14) << "px" << setw(14) << "py" << setw(14) << "pz" << setw(14) << "E" << setw(14) << "m" << endl ;
-  cout << setw(14) << mom[0] << setw(14) << mom[1] << setw(14) << mom[2] << setw(14) << mom[3] << setw(14) << mom[4] << endl ;
-#endif
   int nprod ;
   Particle** daughters ;
   decay(p, nprod, daughters) ;
-#ifdef DEBUG2
-  cout << "decay into : " ; for(int iprod=0; iprod<nprod; iprod++) cout << "  " << ppid[iprod] ;
-  cout << endl ;
-  for(int iprod=0; iprod<nprod; iprod++)
-   cout << setw(14) << pmom[iprod][0] << setw(14) << pmom[iprod][1] << setw(14) << pmom[iprod][2] << setw(14) << pmom[iprod][3] << setw(14) << pmom[iprod][4] << endl ;
-#endif
  //------------------ adding daughters to list (daughter #0 replaces original particle)
   ptls[iev][ipart] = daughters[0] ;
   for(int iprod=1; iprod<nprod; iprod++){
     ptls[iev].push_back(daughters[iprod]) ;
   }
   delete [] daughters ;
+  delete p ;
 //--------------------------------------------
   } // decay procedure
  }

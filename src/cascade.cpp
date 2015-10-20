@@ -12,12 +12,54 @@
 #include "UKUtility.h"
 #include "DatabasePDG2.h"
 #include "tree.h"
+#include "generate.h"
 #include "const.h"
 
 extern DatabasePDG2 *database;
 extern TRandom3* rnd;
+extern Generator* gen;
 
 using namespace std;
+
+int ievcasc ; // event #
+
+void cxxninit_(int *np)
+{
+ *np = gen->ptls[ievcasc].size() ;
+}
+
+
+void cxxinit_(int* index, int* id1, float* x1, float* y1, float* z1, float* t1, float* px1, float* py1, float* pz1, float* E1, float* mass1)
+{
+// std::cout << "Particle initialized!\n" ;
+ Particle* p = gen->ptls[ievcasc][*index-1] ;
+ *id1 = p->def->GetPDG() ;
+ *x1  = p->x ;
+ *y1  = p->y ;
+ *z1  = p->z ;
+ *t1  = p->t ;
+ *px1 = p->px ;
+ *py1 = p->py ;
+ *pz1 = p->pz ;
+ *E1  = p->E ;
+ *mass1 = sqrt((*E1)*(*E1)-(*px1)*(*px1)-(*py1)*(*py1)-(*pz1)*(*pz1)) ;
+}
+
+
+void cxxnfinal_(int *np)
+{
+ gen->ptls[ievcasc].clear();
+//! std::cout << "cxx : created " << *np << " final particles\n" ;
+}
+
+
+void cxxfinal_(int* index, int* id1, float* x1, float* y1, float* z1, float* t1, float* px1, float* py1, float* pz1, float* E1, float* mass1)
+{
+ Particle* p = new Particle(*x1, *y1, *z1, *t1, *px1, *py1, *pz1, *E1,
+                   database->GetPDGParticle(*id1), 0);
+ gen->ptls[ievcasc].push_back(p);
+}
+
 
 //##########  resonance decay kinematics from FASTMC ###################
 

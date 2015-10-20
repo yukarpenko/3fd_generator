@@ -21,17 +21,19 @@ class Generator{
  TRandom *rnd;
  double *ntherm, dvMax, dsigmaMax;
  DatabasePDG2 *database;
+ bool rescatter;
  MyTree *tree;
  int NPART;
  int NEVENTS;
- std::vector<std::vector<Particle*> > ptls;
 
  void generate(Surface *su); // to be called from generate2surf()
 
 public:
- Generator(TRandom *rndIn, DatabasePDG2 *dbsIn);
+ std::vector<std::vector<Particle*> > ptls;
+ Generator(TRandom *rndIn, DatabasePDG2 *dbsIn, bool rescatterIn);
  ~Generator();
  void generate2surf(Surface *su1, Surface *su2, int nevents);
- void decayResonances();
+ void acceptParticle(int ievent, Particle *p);
+ void rescatterDecay();
  void fillTree();
 };
