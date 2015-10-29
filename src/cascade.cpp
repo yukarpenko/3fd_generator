@@ -57,7 +57,10 @@ void cxxfinal_(int* index, int* id1, float* x1, float* y1, float* z1, float* t1,
 {
  Particle* p = new Particle(*x1, *y1, *z1, *t1, *px1, *py1, *pz1, *E1,
                    database->GetPDGParticle(*id1), 0);
- gen->ptls[ievcasc].push_back(p);
+ if(!database->GetPDGParticle(*id1))
+  cout<<"*** cxxfinal: unknown particle id = "<<*id1<<endl;
+ else
+  gen->ptls[ievcasc].push_back(p);
 }
 
 

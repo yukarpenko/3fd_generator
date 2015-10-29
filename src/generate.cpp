@@ -199,7 +199,7 @@ for(int iev=0; iev<NEVENTS; iev++){
 for(int iiter=0; iiter<3; iiter++){
  for(int ipart=0; ipart<ptls[iev].size(); ipart++){
  Particle* p = ptls[iev][ipart] ;
- if(p->def==0) { cout << "unknown particle: " << p->def->GetPDG() << endl ; continue ; }
+ if(p->def==0) { cout << "*** unknown particle: " << iev << " " << ipart << endl ; continue ; }
  if(p->def->GetWidth()>0. && !isStable(p->def->GetPDG())){
   p->x = p->x  + p->px/p->E*(400. - p->t) ;
   p->y = p->y  + p->py/p->E*(400. - p->t) ;
