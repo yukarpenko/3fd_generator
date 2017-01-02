@@ -203,8 +203,8 @@ for(int iiter=0; iiter<3; iiter++){
   ptls[iev][ipart] = daughters[0] ;
   for(int iprod=1; iprod<nprod; iprod++){
     ptls[iev].push_back(daughters[iprod]) ;
-    delete daughters[iprod];
   }
+  delete [] daughters;
 //--------------------------------------------
   } // decay procedure
  }
