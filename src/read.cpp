@@ -23,6 +23,10 @@ const double n0 = 0.15; // normal nuclear density, [1/fm^3]
 
 BaryonRich::BaryonRich(const char* filename) {
   ifstream fin(filename);
+  if(!fin) {
+   cout << "BaryonRich: error opening " << filename << endl;
+   exit(1);
+  }
   fin >> ApN >> AtN >> EkinN >> trl >> tfreg >> pibint >> interEoS >> nroN >>
       Lpercell >> dxdz >> dxdt >> Lnucl >> ieos >> edefr0 >> ehdfr0 >> RpN >>
       RtN >> hxN >> hyN >> hzN >> dtN >> hxmin >> hymin >> hzmin >> dtmin >>
@@ -93,6 +97,10 @@ BaryonRich::BaryonRich(const char* filename) {
 
 Fireball::Fireball(const char* filename) {
   ifstream fin(filename);
+  if(!fin) {
+   cout << "Fireball: error opening " << filename << endl;
+   exit(1);
+  }
   fin >> ApP >> AtP >> EkinP >> trlP >> tfregP >> pibintP >> interEoSp >>
       nroP >> Lpercell >> dxdz >> dxdt >> Lnucl >> ieosP >> edefr0P >>
       ehdfr0P >> RpP >> RtP >> hxP >> hyP >> hzP >> dtP >> uP >> guP >> V0P >>
