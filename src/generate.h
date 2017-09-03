@@ -29,7 +29,7 @@ class Generator{
  void generate(Surface *su); // to be called from generate2surf()
 
 public:
- std::vector<std::vector<Particle*> > ptls;
+ std::vector<std::vector<Particle*> > ptls, ptls_nocasc;
  Generator(TRandom *rndIn, DatabasePDG2 *dbsIn, bool rescatterIn);
  ~Generator();
  void generate2surf(Surface *su1, Surface *su2, int nevents);

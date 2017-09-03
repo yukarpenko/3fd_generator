@@ -74,22 +74,42 @@ MyTree::~MyTree()
 
 void MyTree::fill(int iev)
 {
+  int i = 0;
   Npart = ptls[iev].size() ;
  for(int ipart=0; ipart<Npart; ipart++){
-   X[ipart] = ptls[iev][ipart]->x ;
-   Y[ipart] = ptls[iev][ipart]->y ;
-   Z[ipart] = ptls[iev][ipart]->z ;
-   T[ipart] = ptls[iev][ipart]->t ;
-  Px[ipart] = ptls[iev][ipart]->px ;
-  Py[ipart] = ptls[iev][ipart]->py ;
-  Pz[ipart] = ptls[iev][ipart]->pz ;
-   E[ipart] = ptls[iev][ipart]->E ;
-  Id[ipart] = ptls[iev][ipart]->def->GetPDG() ;
- MId[ipart] = ptls[iev][ipart]->mid ;
- Ele[ipart] = ptls[iev][ipart]->def->GetElectricCharge() ;
- Bar[ipart] = ptls[iev][ipart]->def->GetBaryonNumber() ;
-Strg[ipart] = ptls[iev][ipart]->def->GetStrangeness() ;
+   X[i] = ptls[iev][ipart]->x ;
+   Y[i] = ptls[iev][ipart]->y ;
+   Z[i] = ptls[iev][ipart]->z ;
+   T[i] = ptls[iev][ipart]->t ;
+  Px[i] = ptls[iev][ipart]->px ;
+  Py[i] = ptls[iev][ipart]->py ;
+  Pz[i] = ptls[iev][ipart]->pz ;
+   E[i] = ptls[iev][ipart]->E ;
+  Id[i] = ptls[iev][ipart]->def->GetPDG() ;
+ MId[i] = ptls[iev][ipart]->mid ;
+ Ele[i] = ptls[iev][ipart]->def->GetElectricCharge() ;
+ Bar[i] = ptls[iev][ipart]->def->GetBaryonNumber() ;
+Strg[i] = ptls[iev][ipart]->def->GetStrangeness() ;
+     i++;
  }
+  Npart = ptls_nocasc[iev].size() ;
+ for(int ipart=0; ipart<Npart; ipart++){
+   X[i] = ptls_nocasc[iev][ipart]->x ;
+   Y[i] = ptls_nocasc[iev][ipart]->y ;
+   Z[i] = ptls_nocasc[iev][ipart]->z ;
+   T[i] = ptls_nocasc[iev][ipart]->t ;
+  Px[i] = ptls_nocasc[iev][ipart]->px ;
+  Py[i] = ptls_nocasc[iev][ipart]->py ;
+  Pz[i] = ptls_nocasc[iev][ipart]->pz ;
+   E[i] = ptls_nocasc[iev][ipart]->E ;
+  Id[i] = ptls_nocasc[iev][ipart]->def->GetPDG() ;
+ MId[i] = ptls_nocasc[iev][ipart]->mid ;
+ Ele[i] = ptls_nocasc[iev][ipart]->def->GetElectricCharge() ;
+ Bar[i] = ptls_nocasc[iev][ipart]->def->GetBaryonNumber() ;
+Strg[i] = ptls_nocasc[iev][ipart]->def->GetStrangeness() ;
+     i++;
+ }
+ Npart = ptls[iev].size() + ptls_nocasc[iev].size() ;
  tree->Fill() ;
  //cout<<"tree: filled "<<Npart<<" particles\n";
 }

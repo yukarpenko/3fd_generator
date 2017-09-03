@@ -62,6 +62,8 @@ void Generator::generate2surf(Surface *su1, Surface *su2, int nevents)
  NEVENTS = nevents;
  ptls.resize(NEVENTS);
  for(int i=0; i<NEVENTS; i++) ptls.at(i).reserve(1000);
+ ptls_nocasc.resize(NEVENTS);
+ for(int i=0; i<NEVENTS; i++) ptls_nocasc.at(i).reserve(100);
  tree = new MyTree("out",NEVENTS) ;
  cout<<"Sampling particles from surface 1\n";
  generate(su1);
@@ -173,6 +175,7 @@ void Generator::acceptParticle(int ievent, Particle *p)
   Particle** daughters ;
   decay(p, nprod, daughters) ;
  //------------------ adding daughters to list (daughter #0 replaces original particle)
+  if(nprod>0){
   for(int iprod=0; iprod<nprod; iprod++){
     int daughterId = p->def->GetPDG() ;
     int urqmdid, urqmdiso3;
@@ -183,6 +186,9 @@ void Generator::acceptParticle(int ievent, Particle *p)
   }
   delete [] daughters ;
   delete p ;
+  } else {
+    ptls_nocasc[ievent].push_back(p);
+  }
  }
 }
 
@@ -227,7 +233,7 @@ for(int iiter=0; iiter<3; iiter++){
 void Generator::fillTree()
 {
  cout<<"Writing trees\n";
- tree->passVector(ptls);
+ tree->passVectors(ptls, ptls_nocasc);
  for(int iev=0; iev<NEVENTS; iev++){
   tree->fill(iev);
  }

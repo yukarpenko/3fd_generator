@@ -26,7 +26,7 @@ struct Particle{
 
 class MyTree{
  TTree *tree ;
- std::vector<std::vector<Particle*> > ptls;
+ std::vector<std::vector<Particle*> > ptls, ptls_nocasc;
  // 1D arrays:
  Int_t Npart ;
  Double_t *X, *Y, *Z, *T, *Px, *Py, *Pz, *E ;
@@ -40,5 +40,7 @@ public:
 // void add(int iev, Particle*  p) ;
 // void reset() ;
  void fill(int iev) ;
- void passVector(std::vector<std::vector<Particle*> > &vect) { ptls=vect; }
+ void passVectors(std::vector<std::vector<Particle*> > &vect,
+   std::vector<std::vector<Particle*> > &vect_nocasc) {
+    ptls=vect; ptls_nocasc = vect_nocasc; }
 } ;
