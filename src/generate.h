@@ -27,6 +27,7 @@ class Generator{
  int NEVENTS;
 
  void generate(Surface *su); // to be called from generate2surf()
+ void generate_clusters(Surface *su);
 
 public:
  std::vector<std::vector<Particle*> > ptls, ptls_nocasc;
@@ -36,4 +37,6 @@ public:
  void acceptParticle(int ievent, Particle *p);
  void rescatterDecay();
  void fillTree();
+ double deltaE(double T, double nb, int type, double& deltaE,
+  double& dEpauli, double& g);
 };

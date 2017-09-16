@@ -27,6 +27,7 @@ class Surface{
   virtual float getMuB(int i) = 0;
   virtual float getMuS(int i) = 0;
   virtual float getVol(int i) = 0;
+  virtual float getNb(int i) = 0;
   virtual float getEps(int i) = 0;
   virtual float getRpfl(int i) = 0;
 };
@@ -57,6 +58,7 @@ public:
   virtual inline float getMuB(int i) { return Chb[i]; }
   virtual inline float getMuS(int i) { return Chsb[i]; }
   virtual inline float getVol(int i) { return Qbp[i]/fabs(dNbp[i]); }  // fm^3
+  virtual inline float getNb(int i) { return fabs(dNbp[i]); }  // fm^3
   virtual inline float getEps(int i) { return Ebp[i]; }
   virtual inline float getRpfl(int i) { return Rpfl[i]; } // concentration, <= 1
 };
@@ -87,6 +89,7 @@ class Fireball : public Surface {
   virtual inline float getMuB(int i) { return 0.0; }
   virtual inline float getMuS(int i) { return 0.0; }
   virtual inline float getVol(int i) { return Vpip[i]; }
+  virtual inline float getNb(int i) { return 0.; }
   virtual inline float getEps(int i) { return eppi[i]; }
   virtual inline float getRpfl(int i) { return 1.0; } // concentration, <= 1
 };
