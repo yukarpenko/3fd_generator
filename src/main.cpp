@@ -39,6 +39,7 @@ int main(int argc, char **argv) {
  char *fileB, *fileF, *fileOut;
  int nevents;
  bool rescatter = false;
+ bool selfEnergy = false;
  ranseed = 1234;
 // processing command-line args
  if(argc==1){
@@ -54,6 +55,7 @@ int main(int argc, char **argv) {
    if(strcmp(argv[iarg],"-n")==0) nevents = atoi(argv[iarg+1]);
    if(strcmp(argv[iarg],"-r")==0) ranseed = atoi(argv[iarg+1]);
    if(strcmp(argv[iarg],"-U")==0) rescatter = true;
+   if(strcmp(argv[iarg],"-SE")==0) selfEnergy = true;
   }
   cout<<"random seed: "<<ranseed<<endl;
   cout<<"Baryon fluid surface: "<<fileB<<endl;
@@ -74,6 +76,8 @@ int main(int argc, char **argv) {
  BaryonRich surf1(fileB);
  Fireball surf2(fileF);
  gen = new Generator(rnd,database,rescatter);
+ if(selfEnergy) cout << "!! SELF-ENERGIES ON\n";
+ gen->selfEnergyOn(selfEnergy);
  //---test
  //double T=0.1, nb=0.2, deltaE, dEpauli, g;
  //cout << "T = " << T << "  nb = " << nb << endl;

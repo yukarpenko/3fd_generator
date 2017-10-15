@@ -25,6 +25,7 @@ class Generator{
  MyTree *tree;
  int NPART;
  int NEVENTS;
+ bool bSelfEnergy;
 
  void generate(Surface *su); // to be called from generate2surf()
  void generate_clusters(Surface *su);
@@ -39,4 +40,5 @@ public:
  void fillTree();
  double deltaE(double T, double nb, int type, double& deltaE,
   double& dEpauli, double& g);
+ void selfEnergyOn(bool on) { bSelfEnergy = on; };
 };

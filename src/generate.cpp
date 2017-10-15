@@ -16,6 +16,7 @@
 #include <cmath>
 #include <iomanip>
 #include <cstdlib>
+#include <stdlib.h>
 #include <cmath>
 #include <iostream>
 #include <fstream>
@@ -33,6 +34,8 @@ using namespace std ;
 #define _USE_MATH_DEFINES
 
 extern int ievcasc;
+
+const double muMassLim = 0.05;
 
 double ffthermal(double *x, double *par)
 {
@@ -98,6 +101,7 @@ Generator::Generator(TRandom *rndIn, DatabasePDG2 *dbsIn, bool rescatterIn)
  rnd = rndIn;
  database = dbsIn;
  rescatter = rescatterIn;
+ bSelfEnergy = false;
 }
 
 
@@ -135,7 +139,6 @@ void Generator::generate(Surface *su)
  const int NPART = database->GetNParticles() ;
  // particle densities (thermal). Seems to be redundant, but needed for fast generation
  double cumulantDensity [NPART] ;
-
  // first baryon-rich fluids
  for(int iel=0; iel<su->getN(); iel++){ // loop over all elements
   // ---> thermal densities, for each surface element
@@ -147,8 +150,9 @@ void Generator::generate(Surface *su)
     const double mass = particle->GetMass() ;
     const double J = particle->GetSpin() ;
     const double stat = int(2.*J) & 1 ? -1. : 1. ;
-    const double muf = particle->GetBaryonNumber()*su->getMuB(iel)
+    double muf = particle->GetBaryonNumber()*su->getMuB(iel)
      + particle->GetStrangeness()*su->getMuS(iel); // and NO electric chem.pot.
+    if(muf-mass > -muMassLim) muf = mass-muMassLim;
     for(int i=1; i<11; i++)
     density += (2.*J+1.)*pow(gevtofm,3)/(2.*pow(TMath::Pi(),2))*mass*mass
     *su->getTemp(iel)*pow(stat,i+1)*TMath::BesselK(2,i*mass/su->getTemp(iel))
@@ -181,10 +185,11 @@ void Generator::generate(Surface *su)
    const double J = part->GetSpin() ;
    const double mass = part->GetMass() ;
    const double stat = int(2.*J) & 1 ? -1. : 1. ;
-   const double muf = part->GetBaryonNumber()*su->getMuB(iel)
+   double muf = part->GetBaryonNumber()*su->getMuB(iel)
     + part->GetStrangeness()*su->getMuS(iel); // and NO electric chem.pot.
    if(muf>=mass) cout << " ^^ muf = " << muf << "  " << part->GetPDG() << endl ;
    fthermal->SetParameters(su->getTemp(iel),muf,mass,stat) ;
+   if(muf-mass > -muMassLim) muf = mass-muMassLim;
    //const double dfMax = part->GetFMax() ;
    double weight = 1.0 ;
    if(part->GetBaryonNumber()==0 && part->GetStrangeness()==0)
@@ -224,29 +229,40 @@ void Generator::generate_clusters(Surface *su)
  int ntherm_fail=0 ;
  const int nClustSpec = 3 ;
  const int pidClust [nClustSpec] = {1000010020, 1000010030, 1000020040};
+ const double statClust [nClustSpec] = {1.0, -1.0, 1.0};
  const int typesClust [nClustSpec] = {0, 1, 3};
  // particle densities (thermal). Seems to be redundant, but needed for fast generation
  double cumulantDensity [nClustSpec] ;
-
- // first baryon-rich fluids
  for(int iel=0; iel<su->getN(); iel++){ // loop over all elements
   // ---> thermal densities, for each surface element
    totalDensity = 0.0 ;
-   if(su->getTemp(iel)<=0.){ ntherm_fail++ ; continue ; }
+   if(su->getTemp(iel)<=0.0){ ntherm_fail++ ; continue ; }
    for(int ip=0; ip<nClustSpec; ip++){
     double density = 0. ;
     ParticlePDG2 *particle = database->GetPDGParticle(pidClust[ip]) ;
     const double mass = particle->GetMass() ;
     const double J = particle->GetSpin() ;
-    const double stat = int(2.*J) & 1 ? -1. : 1. ;
-    double deltaE_SE, dEpauli, g;
-    deltaE(su->getTemp(iel), su->getNb(iel), typesClust[ip], deltaE_SE, dEpauli, g);
-    const double muf = particle->GetBaryonNumber()*su->getMuB(iel)
+    const double stat = statClust[ip] ;
+    double deltaE_SE=0.0, dEpauli, g;
+    if(bSelfEnergy)
+     deltaE(su->getTemp(iel), su->getNb(iel), typesClust[ip], deltaE_SE, dEpauli, g);
+    double muf = particle->GetBaryonNumber()*su->getMuB(iel)
      + particle->GetStrangeness()*su->getMuS(iel) - deltaE_SE; // and NO electric chem.pot.
-    for(int i=1; i<11; i++)
-    density += (2.*J+1.)*pow(gevtofm,3)/(2.*pow(TMath::Pi(),2))*mass*mass
-    *su->getTemp(iel)*pow(stat,i+1)*TMath::BesselK(2,i*mass/su->getTemp(iel))
-    *exp(i*muf/su->getTemp(iel))/i ;
+    if(muf-mass > -muMassLim) muf = mass-muMassLim;
+    int imax = (int)(700.*su->getTemp(iel)/mass);
+    if(imax>20) imax = 20;
+    for(int i=1; i<imax; i++)
+     density += pow(stat,i+1)*TMath::BesselK(2,i*mass/su->getTemp(iel))
+      *exp(i*muf/su->getTemp(iel))/i ;
+    //for(int i=imax; i<50; i++)
+    // density += pow(stat,i+1)*sqrt(0.5*TMath::Pi()*su->getTemp(iel)/mass/i)*
+    //  exp(i*(muf-mass)/su->getTemp(iel))/i;
+    density *= (2.*J+1.)*pow(gevtofm,3)/(2.*pow(TMath::Pi(),2))*
+     mass*mass*su->getTemp(iel);
+     // exact integration
+    //fthermal->SetParameters(su->getTemp(iel),muf,mass,stat) ;
+    //density = (2.*J+1.)*pow(gevtofm,3)/(2.*pow(TMath::Pi(),2))*
+    // fthermal->Integral(0., 10.);
     if(ip>0) cumulantDensity[ip] = cumulantDensity[ip-1] + density ;
         else cumulantDensity[ip] = density ;
     totalDensity += density ;
@@ -274,10 +290,11 @@ void Generator::generate_clusters(Surface *su)
    ParticlePDG2 *part = database->GetPDGParticle(pidClust[isort]) ;
    const double J = part->GetSpin() ;
    const double mass = part->GetMass() ;
-   const double stat = int(2.*J) & 1 ? -1. : 1. ;
-   const double muf = part->GetBaryonNumber()*su->getMuB(iel)
+   const double stat = statClust[ip] ;
+   double muf = part->GetBaryonNumber()*su->getMuB(iel)
     + part->GetStrangeness()*su->getMuS(iel); // and NO electric chem.pot.
-   if(muf>=mass) cout << " ^^ muf = " << muf << "  " << part->GetPDG() << endl ;
+   //if(muf>=mass) cout << " ^^ muf = " << muf << "  " << part->GetPDG() << endl ;
+   if(muf-mass > -muMassLim) muf = mass-muMassLim;
    fthermal->SetParameters(su->getTemp(iel),muf,mass,stat) ;
    //const double dfMax = part->GetFMax() ;
    double weight = 1.0 ;
