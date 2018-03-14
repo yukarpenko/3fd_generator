@@ -56,13 +56,32 @@ double ffthermal_clust(double *x, double *par)
   return x[0]*x[0]/( exp((sqrt(x[0]*x[0]+mass*mass)+deltaE-mu)/T) - stat ) ;
 }
 
-double Generator::deltaE(double T, double nb, int type, double& deltaE, double& dEpauli, double& g)
+void erfc_complex(double x, double y, double& re, double& im)
+// computes z=erfc(x+iy),  returns re=Re(z), im=Im(z)
+{
+ if(fabs(x)>1e-30) {
+ re = (1.-cos(2.*x*y))/(2.*M_PI*x);
+ im = sin(2.*x*y)/(2.*M_PI*x);
+ } else {
+  re = 0.;
+  im = y / M_PI;
+ }
+ for(int n=1; n<10; n++){
+  double prefac = 2./M_PI*exp(-0.25*n*n)/(n*n + 4.*x*x);
+  re += prefac*(2.*x - 2.*x*cosh(n*y)*cos(2.*x*y) + n*sinh(n*y)*sin(2.*x*y));
+  im += prefac*(2.*x*cosh(n*y)*sin(2.*x*y) + n*sinh(n*y)*cos(2.*x*y));
+ }
+ re *= exp(-x*x);
+ im *= exp(-x*x);
+ re = 1. - re - erf(x); // conversion from erf to erfc
+ im = -im; // conversion from erf to erfc
+}
+
+double Generator::deltaE(double T, double nb, int type, double& S, double& V)
 // type: 0 = deuterium, 1 = tritium, 2 = helium-3, 3 = alpha
 // returning values:
 // deltaE is correction to cluster energy which does not depend on momentum
-// dEpauli is factor in front of exponent in Eq. (23)
-// g is g_{A,Z} in Eq. (23)
-// ref: Typel et al, PRC 81, 015803 (2010)
+// ref: PRC 92, 054001
 {
  const double __ai1 [4] = {38386.4, 69516.2, 58442.5, 164371.}; // MeV^5/2 / fm^3
  double ai1 [4];
@@ -79,21 +98,62 @@ double Generator::deltaE(double T, double nb, int type, double& deltaE, double& 
  const double hi2 [4] = {17.5, 0., 0., 0.}; // [fm^3]
  const double A [4] = {2., 3., 3., 4.}; // mass number of a cluster
  // we approximate n = n_p + n_n \approx nb
- // also as opposed to Eqs. A1, A2, Sigma* must be [GeV]
- double Sigma0 = 1e-3*nb*(3462.24 + nb*(-11312.4 + nb*(20806.1 + nb*352.371)));
- double Sigma = 1e-3*nb*(4524.13-0.006926*T + nb*(-19190.7 + nb*(62169.5 + nb*(-91005.1))));
+ // !!! s*  [MeV], v* [MeV], T [MeV]
+ T = T*1000.;   // GeV --> MeV
+ double s1 = 4462.35 - 7.22458*T + 0.00975576*T*T;    // s1 [Mev], T[MeV]
+ double s2 = 204334 + 7293.230*T - 209.452*T*T;  // s2 [MeV], T[MeV]
+ double s3 = 125513 + 1055.300*T + 132.502*T*T;  // s3 [MeV], T[MeV]
+ double s4 = 49.0026 + 1.70156*T - 0.0456724*T*T;  // s4 [fm^3]
+ double s5 = 241.935 + 6.6665*T - 0.112997*T*T;  // s5 [fm^6]
+ double v1 = 3403.94 - 0.000978098*T + 0.0000651609*T*T;
+ double v2 = -345.863 + 29.309*T + 3.63322*T*T;
+ double v3 = 33553.8 - 192.395*T + 15.2158*T*T;
+ double v4 = 2.7078 + 0.0161456*T + 0.00105179*T*T;
+ double v5 = 18.7473 - 0.102959*T + 0.0118049*T*T;
+ V = A[type] * nb*(v1 + nb*(v2 + nb*v3))/(1. + nb*(v4 + nb*v5)) * 0.001; // [GeV]
+ S = A[type] * nb*(s1 + nb*(s2 + nb*s3))/(1. + nb*(s4 + nb*s5)) * 0.001; // [GeV]
+}
+
+
+double Generator::dEPauli(double p, double T, double nb, int type)
+{
  //---Pauli correction
- double y = 1.0 + ai2[type]/T;
- double pauli0 = 0.0;
- if(type==0)
-  pauli0 = ai1[0]/pow(T, 1.5) * (pow(y, -0.5) - sqrt(M_PI) * ai3 *
-   exp(ai3*ai3*y) * erfc(ai3 * sqrt(y)));
- else
-  pauli0 = ai1[type]/(pow(T*y, 1.5) * (1. + (bi1[type] + bi2[type]/T)*nb));
- dEpauli = -nb * pauli0;
- g = pow(0.1973269788, 2.)*(gi1[type] + gi2[type]*T + hi1[type]*nb) /
-   (1. + hi2[type]*nb);
- deltaE = A[type] * (Sigma0 - Sigma);
+ // f_{nu,i}, c_{nu,i}, d_{nu,i}
+ // array index denote cluster type
+ T = T*1000.; // converting T to MeV
+ // important remark: since the momentum enters the formulas always
+ // as P/hhar, and hbar [GeV*fm], we keep P in [GeV]
+ const double f1 [4] = {6792.6, 20103.4, 19505.9, 36146.7};
+ const double f2 [4] = {22.52, 11.987, 11.748, 17.074};
+ const double f3 [4] = {0.2223, 0.85465, 0.84473, 0.9865};
+ const double f4 [4] = {0.2317, 0.9772, 0.9566, 1.9021};
+ const double c0 [4] = {2.752, 11.556, 10.435, 150.71};
+ const double c1 [4] = {32.032, 117.24, 176.78, 9772.};
+ const double c2 [4] = {0., 3.7362, 3.5926, 2.0495};
+ const double c3 [4] = {9.733, 4.8426, 5.8137, 2.1624};
+ const double d1 [4] = {523757., 108762., 90996., 5391.2};
+ const double d2 [4] = {0., 9.3312, 10.72, 3.5099};
+ const double d3 [4] = {15.273, 49.678, 47.919, 44.126};
+ const double unu [4] = {11.23, 25.27, 25.27, 44.92};
+ const double wnu [4] = {0.145, 0.284, 0.27, 0.433};
+ const double Ekinintr [4] = {10.338, 23.735, 23.021, 51.575};
+ const double dnu = d1[type]/(pow(T-d2[type], 2) + d3[type]) *
+   exp(-p*p/(wnu[type]*T*(nb+1e-15)*hbarC*hbarC));  // eq. (C4)
+ const double cnu = c0[type] + c1[type]/(pow(T-c2[type],2) + c3[type]); // eq C3
+ // now, for the exp()*erfc() factor, we use that:
+ // Im[exp(a+ib)*(erfc_re + i*erfc_im)] = exp(a)*(sin(b)*erfc_re + cos(b)*erfc_im)
+ double A = f3[type]*f3[type]*(1.+f2[type]/T);
+ double B = -p/(hbarC*2.*f4[type]*(1.+T/f2[type]));
+ double erfc_re, erfc_im;
+ erfc_complex(A, -A*B, erfc_re, erfc_im);
+ // fnu is Eq. (C2)
+ double fnu = f1[type]*exp(-p*p/(hbarC*hbarC*(
+   4.*pow(f4[type]/f3[type], 2)*(1.+T/f2[type])+unu[type]*nb)))*
+   2.*f4[type]*hbarC/((p+1e-15)*sqrt(T))*
+   exp(A*(1.-B*B))*(sin(-2.*A*B)*erfc_re + cos(-2.*A*B)*erfc_im);
+ // we assumy that asymmetry Y=0, therefore:
+ double ynu [4] = {1.,  2./3.,  4./3., 1.};
+ return cnu * (1. - exp(-fnu/cnu*ynu[type]*nb - dnu*nb*nb)) * 0.001; //  [GeV]
 }
 
 Generator::Generator(TRandom *rndIn, DatabasePDG2 *dbsIn, bool rescatterIn)
@@ -233,6 +293,7 @@ void Generator::generate_clusters(Surface *su)
  const int typesClust [nClustSpec] = {0, 1, 3};
  // particle densities (thermal). Seems to be redundant, but needed for fast generation
  double cumulantDensity [nClustSpec] ;
+ ofstream fSE ("self_energies");
  for(int iel=0; iel<su->getN(); iel++){ // loop over all elements
   // ---> thermal densities, for each surface element
    totalDensity = 0.0 ;
@@ -240,14 +301,18 @@ void Generator::generate_clusters(Surface *su)
    for(int ip=0; ip<nClustSpec; ip++){
     double density = 0. ;
     ParticlePDG2 *particle = database->GetPDGParticle(pidClust[ip]) ;
-    const double mass = particle->GetMass() ;
+    double S=0.0, V=0.0, _dEPauli;
+    if(bSelfEnergy) {
+     deltaE(su->getTemp(iel), su->getNb(iel), typesClust[ip], S, V);
+     _dEPauli = dEPauli(0., su->getTemp(iel), su->getNb(iel), typesClust[ip]);
+     fSE << su->getTemp(iel) << " " << su->getNb(iel) << " " << S << " "
+      << V << " " << _dEPauli << endl;
+    }
+    const double mass = particle->GetMass() - S;
     const double J = particle->GetSpin() ;
     const double stat = statClust[ip] ;
-    double deltaE_SE=0.0, dEpauli, g;
-    if(bSelfEnergy)
-     deltaE(su->getTemp(iel), su->getNb(iel), typesClust[ip], deltaE_SE, dEpauli, g);
     double muf = particle->GetBaryonNumber()*su->getMuB(iel)
-     + particle->GetStrangeness()*su->getMuS(iel) - deltaE_SE; // and NO electric chem.pot.
+     + particle->GetStrangeness()*su->getMuS(iel) - V; // and NO electric chem.pot.
     if(muf-mass > -muMassLim) muf = mass-muMassLim;
     int imax = (int)(700.*su->getTemp(iel)/mass);
     if(imax>20) imax = 20;

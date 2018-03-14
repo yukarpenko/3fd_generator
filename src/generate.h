@@ -38,7 +38,9 @@ public:
  void acceptParticle(int ievent, Particle *p);
  void rescatterDecay();
  void fillTree();
- double deltaE(double T, double nb, int type, double& deltaE,
-  double& dEpauli, double& g);
+ double deltaE(double T, double nb, int type, double& S, double& V);
+ double dEPauli(double p, double T, double nb, int type);
  void selfEnergyOn(bool on) { bSelfEnergy = on; };
 };
+
+void erfc_complex(double x, double y, double& re, double& im);
