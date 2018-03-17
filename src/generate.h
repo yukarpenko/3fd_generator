@@ -26,6 +26,10 @@ class Generator{
  int NPART;
  int NEVENTS;
  bool bSelfEnergy;
+ // to store the table from Niels-Uwe:
+ int NT, Nnb;
+ double Tmin, Tmax, dT;
+ std::vector<std::vector<double> > S, Vn, Vp ;
 
  void generate(Surface *su); // to be called from generate2surf()
  void generate_clusters(Surface *su);
@@ -38,7 +42,8 @@ public:
  void acceptParticle(int ievent, Particle *p);
  void rescatterDecay();
  void fillTree();
- double deltaE(double T, double nb, int type, double& S, double& V);
+ void loadSETables(const char* filename);
+ void deltaE(double T, double nb, int type, double& S, double& V);
  double dEPauli(double p, double T, double nb, int type);
  void selfEnergyOn(bool on) { bSelfEnergy = on; };
 };

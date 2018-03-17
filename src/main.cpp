@@ -78,15 +78,8 @@ int main(int argc, char **argv) {
  gen = new Generator(rnd,database,rescatter);
  if(selfEnergy) cout << "!! SELF-ENERGIES ON\n";
  gen->selfEnergyOn(selfEnergy);
- //---test
- //double T=0.1, nb=0.2, deltaE, dEpauli, g;
- //cout << "T = " << T << "  nb = " << nb << endl;
- //for(int type=0; type<4; type++) {
-  //gen->deltaE(T, nb, type, deltaE, dEpauli, g);
-  //cout << type << setw(14) << deltaE << setw(14) << dEpauli << setw(14) << g <<endl;
- //}
- //return 0;
- //---
+ gen->loadSETables("tab/SE_04.dat");
+
  gen->generate2surf(&surf1, &surf2, nevents);
  gen->rescatterDecay();
  gen->fillTree();

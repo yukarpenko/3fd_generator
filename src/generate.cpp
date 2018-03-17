@@ -21,6 +21,7 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <string>
 #include <TF1.h>
 
 #include "const.h"
@@ -77,43 +78,69 @@ void erfc_complex(double x, double y, double& re, double& im)
  im = -im; // conversion from erf to erfc
 }
 
-double Generator::deltaE(double T, double nb, int type, double& S, double& V)
-// type: 0 = deuterium, 1 = tritium, 2 = helium-3, 3 = alpha
-// returning values:
-// deltaE is correction to cluster energy which does not depend on momentum
-// ref: PRC 92, 054001
+void Generator::loadSETables(const char* filename)
 {
- const double __ai1 [4] = {38386.4, 69516.2, 58442.5, 164371.}; // MeV^5/2 / fm^3
- double ai1 [4];
- // conversion to [GeV^{5/2} / fm^3] :
- for(int i=0; i<4; i++)
-  ai1[i] = __ai1[i] * 3.162277660168379e-08;
- const double ai2 [4] = {0.0225204, 0.00749232, 0.00607718, 0.0106701}; // [GeV]
- const double ai3 = 0.2223;
- const double bi1 [4] = {1.048, 4.414, 4.414, 0.}; // [1/fm^3]
- const double bi2 [4] = {0.2857, 0.0439, 0.0439, 0.0}; // [GeV/fm^3]
- const double gi1 [4] = {0.85, 3.2, 2.638, 8.236}; // [fm^-2]
- const double gi2 [4] = {223., 450., 434., 772.}; // [1/(GeV fm^2)]
- const double hi1 [4] = {132., 37., 43., 50.}; // [fm]
- const double hi2 [4] = {17.5, 0., 0., 0.}; // [fm^3]
- const double A [4] = {2., 3., 3., 4.}; // mass number of a cluster
- // we approximate n = n_p + n_n \approx nb
- // !!! s*  [MeV], v* [MeV], T [MeV]
- T = T*1000.;   // GeV --> MeV
- double s1 = 4462.35 - 7.22458*T + 0.00975576*T*T;    // s1 [Mev], T[MeV]
- double s2 = 204334 + 7293.230*T - 209.452*T*T;  // s2 [MeV], T[MeV]
- double s3 = 125513 + 1055.300*T + 132.502*T*T;  // s3 [MeV], T[MeV]
- double s4 = 49.0026 + 1.70156*T - 0.0456724*T*T;  // s4 [fm^3]
- double s5 = 241.935 + 6.6665*T - 0.112997*T*T;  // s5 [fm^6]
- double v1 = 3403.94 - 0.000978098*T + 0.0000651609*T*T;
- double v2 = -345.863 + 29.309*T + 3.63322*T*T;
- double v3 = 33553.8 - 192.395*T + 15.2158*T*T;
- double v4 = 2.7078 + 0.0161456*T + 0.00105179*T*T;
- double v5 = 18.7473 - 0.102959*T + 0.0118049*T*T;
- V = A[type] * nb*(v1 + nb*(v2 + nb*v3))/(1. + nb*(v4 + nb*v5)) * 0.001; // [GeV]
- S = A[type] * nb*(s1 + nb*(s2 + nb*s3))/(1. + nb*(s4 + nb*s5)) * 0.001; // [GeV]
+ NT = 151;
+ Nnb = 100;
+ S.resize(NT, vector<double> (Nnb));
+ Vn.resize(NT, vector<double> (Nnb));
+ Vp.resize(NT, vector<double> (Nnb));
+
+ ifstream fin(filename) ;
+ if(!fin){ cout << "cannot read file " << filename << endl ; exit(1) ; }
+ // ---- reading loop
+ string line ;
+ istringstream instream ;
+ cout<<"loadSETables: sstream failbit="<<instream.fail()<<endl ;
+ // dummy read of the fist line
+ getline(fin, line) ;
+ instream.str(line) ;
+ instream.seekg(0) ;
+ instream.clear() ; // does not work with gcc 4.1 otherwise
+ // real reading loop
+ double t [NT], nb[Nnb];
+ for(int iT=0; iT<NT; iT++)
+ for(int inb=0; inb<Nnb; inb++) {
+  getline(fin, line) ;
+  instream.str(line) ;
+  instream.seekg(0) ;
+  instream.clear() ; // does not work with gcc 4.1 otherwise
+  instream >> t[iT] >> nb[inb] >> S[iT][inb] >> Vn[iT][inb] >> Vp[iT][inb] ;
+ }
+ dT = (t[1] - t[0])*0.001;  // MeV -> GeV
+ Tmin = t[0]*0.001;  // MeV -> GeV
+ Tmax = t[NT-1]*0.001;  // MeV -> GeV
 }
 
+void Generator::deltaE(double T, double nb, int type, double& Sout, double& Vout)
+// type: 0 = deuterium, 1 = tritium, 2 = helium-3, 3 = alpha
+// returning values:
+// ref: Niels-Uwe, private communication
+{
+ const double lnC = log(1.e-3);
+ const double lnM = log(pow(2./1e-3, 1./100.));
+ const int Np [4] = {1, 1, 2, 2};
+ const int Nn [4] = {1, 2, 1, 2};
+ T = max(T, Tmin);
+ T = min(T, Tmax);
+ nb = max(nb, 0.001);
+ nb = min(nb, 1.853615);
+ double posT = (T-Tmin)/dT; // exact point in the temp grid
+ int iT = (int)(posT); // nearest tab point from the left
+ double posnb = (log(nb)-lnC)/lnM;
+ int inb = (int)(posnb);
+ double wT [2] = {1. - posT + iT, posT - iT};
+ double wnb [2] = {1. - posnb + inb, posnb - inb};
+ Sout = 0.;  Vout = 0.;
+ for(int i=0; i<2; i++)
+ for(int j=0; j<2; j++) {
+  Sout += wT[i] * wnb[j] * S[iT+i][inb + j];
+  Vout += wT[i] * wnb[j] * (Nn[type] * Vn[iT+i][inb + j]
+   + Np[type] * Vp[iT+i][inb + j]);
+ }
+ Sout *= 1e-3; // MeV -> GeV
+ Vout *= 1e-3; // MeV -> GeV
+}
 
 double Generator::dEPauli(double p, double T, double nb, int type)
 {
