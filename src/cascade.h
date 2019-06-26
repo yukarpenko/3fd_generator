@@ -13,4 +13,4 @@ extern"C" {
  void cxxfinal_(int* index, int* id, float* x, float* y, float* z, float* t, float* px, float* py, float* pz, float* E, float* mass);
 }
 
- void decay(Particle *in, int& nprod, Particle** &out);
+ void resonanceDecay(Particle *in, int& nprod, Particle** &out);

@@ -122,21 +122,27 @@ void Generator::deltaE(double T, double nb, int type, double& Sout, double& Vout
  const int Np [4] = {1, 1, 2, 2};
  const int Nn [4] = {1, 2, 1, 2};
  T = max(T, Tmin);
- T = min(T, Tmax);
+ T = min(T, Tmax-1e-5);
  nb = max(nb, 0.001);
  nb = min(nb, 1.853615);
  double posT = (T-Tmin)/dT; // exact point in the temp grid
  int iT = (int)(posT); // nearest tab point from the left
  double posnb = (log(nb)-lnC)/lnM;
  int inb = (int)(posnb);
+ 
  double wT [2] = {1. - posT + iT, posT - iT};
  double wnb [2] = {1. - posnb + inb, posnb - inb};
  Sout = 0.;  Vout = 0.;
  for(int i=0; i<2; i++)
  for(int j=0; j<2; j++) {
   Sout += wT[i] * wnb[j] * S[iT+i][inb + j];
-  Vout += wT[i] * wnb[j] * (Nn[type] * Vn[iT+i][inb + j]
-   + Np[type] * Vp[iT+i][inb + j]);
+  Vout += wT[i] * wnb[j] * (Nn[type] * Vn[iT+i][inb + j] + Np[type] * Vp[iT+i][inb + j]);
+  
+  //cout << "i: " << i << "  j: " << j <<"   iT+i:  " << iT+i << "  inb + j:  " << inb + j << "  S[iT+i][inb + j]:   " << S[iT+i][inb + j] << endl;
+  //cout << "i: " << i << "  j: " << j <<"   iT+i:  " << iT+i << "  inb + j:  " << inb + j << "  Vn[iT+i][inb + j]:   " << Vn[iT+i][inb + j] << endl;
+  //cout << "i: " << i << "  j: " << j <<"   iT+i:  " << iT+i << "  inb + j:  " << inb + j << "  Vp[iT+i][inb + j]:   " << Vp[iT+i][inb + j] << endl;
+  //cout << "Sout:   " << Sout << endl;
+  //cout << "Vout:   " << Vout << endl;
  }
  Sout *= 1e-3; // MeV -> GeV
  Vout *= 1e-3; // MeV -> GeV
@@ -207,10 +213,10 @@ void Generator::generate2surf(Surface *su1, Surface *su2, int nevents)
  for(int i=0; i<NEVENTS; i++) ptls_nocasc.at(i).reserve(100);
  tree = new MyTree("out",NEVENTS) ;
  cout<<"Sampling particles from surface 1\n";
- generate(su1);
+ generate(su1); //for hadrons, comment out for generating only clusters
  generate_clusters(su1);
  cout<<"Sampling particles from surface 2\n";
- generate(su2);
+ generate(su2); //for hadrons, comment out for generating only clusters
  generate_clusters(su2);
 }
 
@@ -428,7 +434,7 @@ void Generator::acceptParticle(int ievent, Particle *p)
  }else{ // decay particles unknown to UrQMD
   int nprod ;
   Particle** daughters ;
-  decay(p, nprod, daughters) ;
+  resonanceDecay(p, nprod, daughters) ;
  //------------------ adding daughters to list (daughter #0 replaces original particle)
   if(nprod>0){
   for(int iprod=0; iprod<nprod; iprod++){
@@ -468,7 +474,7 @@ for(int iiter=0; iiter<3; iiter++){
   p->t = 400. ;
   int nprod ;
   Particle** daughters ;
-  decay(p, nprod, daughters) ;
+  resonanceDecay(p, nprod, daughters) ;
  //------------------ adding daughters to list (daughter #0 replaces original particle)
   ptls[iev][ipart] = daughters[0] ;
   for(int iprod=1; iprod<nprod; iprod++){

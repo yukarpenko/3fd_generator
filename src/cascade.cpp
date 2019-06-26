@@ -77,7 +77,7 @@ double BreitWigner(double mean, double gamma, TRandom* random)
 }
 
 
-void decay(Particle *in, int& nprod, Particle** &out){
+void resonanceDecay(Particle *in, int& nprod, Particle** &out){
   ParticlePDG2* pDef = in->def ;
   Int_t nDecayChannel = pDef->GetNDecayChannels();
   
