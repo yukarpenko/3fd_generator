@@ -40,6 +40,7 @@ int main(int argc, char **argv) {
  int nevents;
  bool rescatter = false;
  bool selfEnergy = false;
+ bool largeTable = false;
  ranseed = 1234;
 // processing command-line args
  if(argc==1){
@@ -56,6 +57,7 @@ int main(int argc, char **argv) {
    if(strcmp(argv[iarg],"-r")==0) ranseed = atoi(argv[iarg+1]);
    if(strcmp(argv[iarg],"-U")==0) rescatter = true;
    if(strcmp(argv[iarg],"-SE")==0) selfEnergy = true;
+   if(strcmp(argv[iarg],"-LT")==0) largeTable = true;
   }
   cout<<"random seed: "<<ranseed<<endl;
   cout<<"Baryon fluid surface: "<<fileB<<endl;
@@ -66,7 +68,10 @@ int main(int argc, char **argv) {
 // end processing command line args
  rnd = new TRandom3();
  rnd->SetSeed(ranseed);
- database = new DatabasePDG2("Tb/ptl3.data","Tb/dky3.mar.data");
+ if(largeTable==true){
+	database = new DatabasePDG2("Tb/ptl3.data","Tb/dky3.mar.data");
+ }
+ else{database = new DatabasePDG2("Tb/ptl3_3FD.data","Tb/dky3.mar.data");}
  database->LoadData();
 //	database->SetMassRange(0.01, 10.0); //-------without PHOTONS
 //	database->SetWidthRange(0., 10.0);
