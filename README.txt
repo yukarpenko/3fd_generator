@@ -16,11 +16,13 @@ the resulting binary is (re)created in $DIR/3fd_generator dir.
 
 2) runninng the generator:
 
-./generator -B <baryon_surface_file> -F <fireball_surface_file> -n <nevents> -o <output_file> -r <int_random_seed> [-U] [-SE]
+./generator -B <baryon_surface_file> -F <fireball_surface_file> -n <nevents> -o <output_file> -r <int_random_seed> [-U] [-SE] [-LT] [-dK0]
 
 -U : enables post-hydro hadronic rescattering via UrQMD
      Otherwise, only hadronic decays are performed.
 -SE : enables self-energy corrections in cluster production.
+-LT : enables large table of resonances. Otherwise, the 3FD table is used.
+-dK0 : enables decays of K0_{short} and anti-K0_{short}.
 
 One must create the corresponding subdirectories for input/output files if necessary.
 

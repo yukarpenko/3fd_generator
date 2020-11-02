@@ -41,6 +41,7 @@ int main(int argc, char **argv) {
  bool rescatter = false;
  bool selfEnergy = false;
  bool largeTable = false;
+ bool decayK0 = false;
  ranseed = 1234;
 // processing command-line args
  if(argc==1){
@@ -58,6 +59,7 @@ int main(int argc, char **argv) {
    if(strcmp(argv[iarg],"-U")==0) rescatter = true;
    if(strcmp(argv[iarg],"-SE")==0) selfEnergy = true;
    if(strcmp(argv[iarg],"-LT")==0) largeTable = true;
+   if(strcmp(argv[iarg],"-dK0")==0) decayK0 = true;
   }
   cout<<"random seed: "<<ranseed<<endl;
   cout<<"Baryon fluid surface: "<<fileB<<endl;
@@ -86,7 +88,7 @@ int main(int argc, char **argv) {
  gen->loadSETables("tab/SE_04.dat");
 
  gen->generate2surf(&surf1, &surf2, nevents);
- gen->rescatterDecay();
+ gen->rescatterDecay(decayK0);
  gen->fillTree();
  file.Write("",TObject::kOverwrite);
  file.Close();

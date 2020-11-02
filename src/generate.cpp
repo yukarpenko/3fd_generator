@@ -584,9 +584,9 @@ void Generator::acceptParticle(int ievent, Particle *p)
 
 
 // here we decay unstable particles
-void Generator::rescatterDecay()
-{
-cout<<"Decaying resonances\n";
+void Generator::rescatterDecay(bool decayK0)
+{	
+	cout<<"Decaying resonances\n";
 for(int iev=0; iev<NEVENTS; iev++){
  ievcasc = iev;
  if(rescatter)
@@ -596,7 +596,9 @@ for(int iiter=0; iiter<3; iiter++){
  for(int ipart=0; ipart<ptls[iev].size(); ipart++){
  Particle* p = ptls[iev][ipart] ;
  int ID = p->def->GetPDG() ;
+ 
  if(p->def==0) { cout << "*** unknown particle: " << iev << " " << ipart << endl ; continue ; }
+ 
  if(p->def->GetWidth()>0. && !isStable(p->def->GetPDG())){
   p->x = p->x  + p->px/p->E*(400. - p->t) ;
   p->y = p->y  + p->py/p->E*(400. - p->t) ;
@@ -614,10 +616,49 @@ for(int iiter=0; iiter<3; iiter++){
   delete [] daughters ;
   delete p ;
 //--------------------------------------------
-  } // decay procedure
- }
- 
+  } // decay procedure	
+ } //ipart
  } // decay iteration
+ 
+ if(decayK0 == true){
+//===== decay of unstable resonances K0 ========
+for(int ipart=0; ipart<ptls[iev].size(); ipart++){
+	 Particle* p = ptls[iev][ipart] ;
+	 int ID = p->def->GetPDG() ;
+	 if (abs(ID) == 311) {
+		 Double_t randValue = rnd->Rndm() ;
+		 if (randValue >0.5){
+			p->x = p->x  + p->px/p->E*(400. - p->t) ;
+			p->y = p->y  + p->py/p->E*(400. - p->t) ;
+			p->z = p->z  + p->pz/p->E*(400. - p->t) ;
+			p->t = 400. ;
+			int nprod ;
+			Particle** daughters ;
+			resonanceDecay(p, nprod, daughters) ;
+			ptls[iev][ipart] = daughters[0] ;
+			for(int iprod=1; iprod<nprod; iprod++){ ptls[iev].push_back(daughters[iprod]) ;}
+  
+			delete [] daughters ;
+			delete p ;
+		} //instable K0
+	 } // K0
+     /*
+	if (ID == 2112 || ID == 2212) {
+		Double_t randValue = rnd->Rndm() ;
+		if (randValue >0.6){
+			Particle *neutron = new Particle(p->x, p->y, p->z, p->t, p->px, p->py, p->pz, p->E, database->GetPDGParticle(2112), p->mid);
+			//ptls[iev].push_back(daughters[iprod]) ;
+			ptls[iev][ipart] = neutron ;
+			//ptls.erase(ipart) ;
+			//ptls[iev].insert(ipart,neutron);
+			}
+		else{ 
+			Particle *proton = new Particle(p->x, p->y, p->z, p->t, p->px, p->py, p->pz, p->E, database->GetPDGParticle(2212), p->mid);
+			ptls[iev][ipart] = proton ;}
+		} 
+		*/
+ }//ipart
+}// if true
 } // events loop
 }
 
