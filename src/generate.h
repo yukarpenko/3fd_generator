@@ -47,7 +47,7 @@ public:
  double dEPauli(double p, double T, double nb, int type);
  void selfEnergyOn(bool on) { bSelfEnergy = on; };
 
-void density_particles(double T, double muB, double muS, double& total_density, double& total_nB, 
+void density_particles(double T, double muB, double muS, double& total_density, double& total_nB, double& total_nS, 
 std::vector<double>&cumulantDensity);
 void density_clusters(double T, double muB, double muS, double& total_densityClust, double& total_nBClust,
 std::vector<double>&cumulantDensityClust);

@@ -184,11 +184,11 @@ double Generator::dEPauli(double p, double T, double nb, int type)
 }
 
 // ------------ density and energy functions --------------
-void Generator::density_particles(double T, double muB, double muS, double& total_density, double& total_nB,  
+void Generator::density_particles(double T, double muB, double muS, double& total_density, double& total_nB, double& total_nS,  
  std::vector<double>&cumulantDensity)
-{   total_density = 0 ;
-    total_nB = 0 ;
-    //total_nS = 0 ;
+{   total_density = 0. ;
+    total_nB = 0. ;
+    total_nS = 0. ;
     cumulantDensity.clear();
 	const int NPART = database->GetNParticles() ; // particle densities (thermal). Seems to be redundant, but needed for fast generation
 	cumulantDensity.reserve(NPART);
@@ -196,11 +196,12 @@ void Generator::density_particles(double T, double muB, double muS, double& tota
 	for(int ip=0; ip<NPART; ip++){
     double density = 0. ; //density of particle ip
     double nB = 0. ;
-    //double nS = 0. ;
+    double nS = 0. ;
     ParticlePDG2 *particle = database->GetPDGParticleByIndex(ip) ;
     const double B = particle->GetBaryonNumber() ;
     const double S = particle->GetStrangeness() ;
     const double mass = particle->GetMass() ;
+    const double ID = particle->GetPDG() ;
     const double J = particle->GetSpin() ;
     const double stat = int(2.*J) & 1 ? -1. : 1. ;
     double muf = B*muB + S*muS; // and NO electric chem.pot.
@@ -226,14 +227,14 @@ void Generator::density_particles(double T, double muB, double muS, double& tota
 			*T*pow(stat,i+1)*TMath::BesselK(2,i*mass/T)*exp(i*muf/T)/i ;
 			}
 		}
-	//if(ID!=3322 || ID!=3312 || ID!=3334){ nS = density * S ; } //strange density of particle ip
+	nS = density * S ; 
 	
 	if(ip>0) cumulantDensity[ip] = cumulantDensity[ip-1] + density ;
     else cumulantDensity[ip] = density ;
     
     total_density += density;
     total_nB += nB;
-    //total_nS += nS;
+    total_nS += nS;
 	} // ip
 }
 
@@ -388,8 +389,8 @@ void Generator::generate(Surface *su)
  double EnergySumFinal = 0.;
  double BSumInit = 0.;
  double BSumFinal = 0.;
- //double SSumInit = 0.;
- //double SSumFinal = 0.;
+ double SSumInit = 0.;
+ double SSumFinal = 0.;
  
  // first baryon-rich fluids
  for(int iel=0; iel<su->getN(); iel++){ 
@@ -403,14 +404,15 @@ void Generator::generate(Surface *su)
 	double lambdaN=exp((muB-massN)/T);
  
 	if(su->getTemp(iel)<=0.||muB>massN){ ntherm_fail++ ; continue ; }
-	double totalDensity, total_nB; 
+	double totalDensity, total_nB, total_nS = 0.; 
 	std::vector<double> cumulantDensity;
-	density_particles(T, muB, su->getMuS(iel), totalDensity, total_nB, cumulantDensity) ; // densities and nB on element iel
+	
+	density_particles(T, muB, su->getMuS(iel), totalDensity, total_nB, total_nS, cumulantDensity) ; // densities and nB on element iel
 	if(totalDensity<0.  || totalDensity>100.){ ntherm_fail++ ; continue ; }
   
 	EnergySumInit += 2*energy_particles(T, muB, su->getMuS(iel)) * dvEff; // Summary energy
 	BSumInit += 2*total_nB * dvEff;
-	//SSumInit += total_nS * dvEff;
+	SSumInit += 2*total_nS * dvEff;
 
 	//----- muB recalculation ---------------
 	double lambdaNprime_k, lambdaNprime_k_1 ;
@@ -424,20 +426,20 @@ void Generator::generate(Surface *su)
 	k++; // iteration
 	lambdaNprime_k_1 = lambdaNprime_k;
 	muB_k_1 = massN + T * log(lambdaNprime_k_1);
-	double totalDensity_k_1, Sum_nB_k_1, totalDensityC_k_1, Sum_nBC_k_1; 
+	double totalDensity_k_1, Sum_nB_k_1, Sum_nS_k_1, totalDensityC_k_1, Sum_nBC_k_1; 
 	std::vector<double> cumulantDensity_k_1;
 	std::vector<double> cumulantDensityC_k_1;
-	density_particles(T, muB_k_1, su->getMuS(iel), totalDensity_k_1, Sum_nB_k_1, cumulantDensity_k_1) ;
+	density_particles(T, muB_k_1, su->getMuS(iel), totalDensity_k_1, Sum_nB_k_1, Sum_nS_k_1, cumulantDensity_k_1) ;
 	density_clusters(T, muB_k_1, su->getMuS(iel), totalDensityC_k_1, Sum_nBC_k_1, cumulantDensityC_k_1) ;
 	
 	lambdaNprime_k = total_nB/((Sum_nB_k_1 + Sum_nBC_k_1)/lambdaNprime_k_1) ; // recalculation of lambda
 	muB_k = massN + T * log(lambdaNprime_k);
 	
 	if(k>50){ muB_k = (muB_k + muB_k_1)/2 ; lambdaNprime_k = exp((muB_k-massN)/T) ; } // relaxation of iterations
-	double totalDensity_k, Sum_nB_k, totalDensityC_k, Sum_nBC_k; 
+	double totalDensity_k, Sum_nB_k, Sum_nS_k, totalDensityC_k, Sum_nBC_k; 
 	std::vector<double> cumulantDensity_k;
 	std::vector<double> cumulantDensityC_k;
-	density_particles(T, muB_k, su->getMuS(iel), totalDensity_k, Sum_nB_k, cumulantDensity_k) ;
+	density_particles(T, muB_k, su->getMuS(iel), totalDensity_k, Sum_nB_k, Sum_nS_k, cumulantDensity_k) ;
 	density_clusters(T, muB_k, su->getMuS(iel), totalDensityC_k, Sum_nBC_k, cumulantDensityC_k) ;
 	
 	double total_nB_k = Sum_nB_k + Sum_nBC_k ; 
@@ -446,15 +448,24 @@ void Generator::generate(Surface *su)
  }//muB>0
     
 	double totalDensity_new, Sum_nB_new, totalDensityClust_new, Sum_nBC_new;
+	double Sum_nS_new = 0.;
 	std::vector<double> cumulantDensity_new;
 	std::vector<double> cumulantDensityClust_new;
-	density_particles(T, muB_k, su->getMuS(iel), totalDensity_new, Sum_nB_new, cumulantDensity_new) ;
+	density_particles(T, muB_k, su->getMuS(iel), totalDensity_new, Sum_nB_new, Sum_nS_new, cumulantDensity_new) ;
 	density_clusters(T, muB_k, su->getMuS(iel), totalDensityClust_new, Sum_nBC_new, cumulantDensityClust_new) ;
 	BSumFinal += 2*(Sum_nB_new + Sum_nBC_new) * dvEff; // new nB of all system
-	//SSumFinal += 0 * dvEff; 
+	SSumFinal += 2*Sum_nS_new * dvEff; // new nS of all system
 	EnergySumFinal += 2*(energy_particles(T, muB_k, su->getMuS(iel)) + energy_clusters(T, muB_k, su->getMuS(iel)) ) * dvEff;
 // ---< end thermal densities calculation
  
+ /*
+	double Z = 79;
+	double A = 197;
+	double Nd=0.;
+	double Nt=0.;
+	double Nhe3=0.;
+	double Nhe4=0.;
+ */
 	////// EVENTS //////
 	for(int ievent=0; ievent<NEVENTS; ievent++){
 	// ---- number of particles to generate
@@ -494,6 +505,7 @@ void Generator::generate(Surface *su)
      su->getT(iel), mom.Px(), -mom.Py(), mom.Pz(), mom.E(), part, 0) ;
      acceptParticle(ievent,pp);
      acceptParticle(ievent,pp2);
+       
    } // accepted according to the weight
   } // we generate a particle
   
@@ -504,7 +516,8 @@ void Generator::generate(Surface *su)
   }else{
     nToGenClust = rnd->Poisson(dvEff*totalDensityClust_new) ;
   }
-   // ---- we generate a particle!
+   // ---- we generate a cluster!
+   
   for(int ip=0; ip<nToGenClust; ip++){
   int isort = 0 ;
   double xsort = rnd->Rndm()*totalDensityClust_new ; // throw dice, particle sort
@@ -535,8 +548,21 @@ void Generator::generate(Surface *su)
      acceptParticle(ievent,pp);
      acceptParticle(ievent,pp2);
    } // accepted according to the weight
+   /*
+   int ID = part->GetPDG() ;
+   // coefficient of protons
+	if(ID==1000010200){Nd++;}
+	else if(ID==1000010300){Nt++;}
+	else if(ID==1000020300){Nhe3++;}
+	else if(ID==1000040400){Nhe4++;}
+	*/ 
+	
   } // we generate a particle
   } // events loop
+  
+  //double newCoef = (2*Z - Nd - Nt - 2*Nhe3 - 2*Nhe4)/(2*A - 2*Nd - 3*Nt - 3*Nhe3 - 4*Nhe4);
+ //cout << "newCoef = "<< newCoef << endl;
+  
   
   if(iel%(su->getN()/50)==0) cout<<setw(3)<<(iel*100)/su->getN()<<"%, "<<setw(20)
   <<dvEff<<setw(20)<<totalDensity<<setw(20)<<su->getTemp(iel)<<setw(20)<<su->getMuB(iel)<<endl ;
@@ -546,8 +572,8 @@ void Generator::generate(Surface *su)
  cout << "EnergySumFinal = "<< EnergySumFinal << " GeV" << endl;
  cout << "BSumInit = "<< BSumInit << endl;
  cout << "BSumFinal = "<< BSumFinal << endl;
- //cout << "SSumInit = "<< SSumInit << endl;
- //cout << "SSumFinal = "<< SSumFinal << endl;
+ cout << "SSumInit = "<< SSumInit << endl;
+ cout << "SSumFinal = "<< SSumFinal << endl;
  cout << "therm_failed elements: " <<ntherm_fail << endl ;
  delete fthermal ;
 }
