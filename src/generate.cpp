@@ -598,7 +598,8 @@ void Generator::acceptParticle(int ievent, Particle *p)
     pdg2id_(&urqmdid, &urqmdiso3, &daughterId) ;
     // again, pass product to UrQMD only if UrQMD knows it
     if(geteposcode_(&daughterId)!=0 && abs(urqmdid)<1000)
-     ptls[ievent].push_back(daughters[iprod]) ;
+		ptls[ievent].push_back(daughters[iprod]) ;
+    else ptls_nocasc[ievent].push_back(daughters[iprod]); 
   }
   delete [] daughters ;
   delete p ;
