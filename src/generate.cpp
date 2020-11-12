@@ -415,47 +415,50 @@ void Generator::generate(Surface *su)
 	SSumInit += 2*total_nS * dvEff;
 
 	//----- muB recalculation ---------------
-	double lambdaNprime_k, lambdaNprime_k_1 ;
-	double muB_k, muB_k_1 ;
-	lambdaNprime_k = lambdaN ;
+	double muB_new;
 	if(muB > 0){
-	int k = 0;
-	double eps = 0.0001;
-	double epsilon = 1;
-	while (epsilon > eps){
-	k++; // iteration
-	lambdaNprime_k_1 = lambdaNprime_k;
-	muB_k_1 = massN + T * log(lambdaNprime_k_1);
-	double totalDensity_k_1, Sum_nB_k_1, Sum_nS_k_1, totalDensityC_k_1, Sum_nBC_k_1; 
-	std::vector<double> cumulantDensity_k_1;
-	std::vector<double> cumulantDensityC_k_1;
-	density_particles(T, muB_k_1, su->getMuS(iel), totalDensity_k_1, Sum_nB_k_1, Sum_nS_k_1, cumulantDensity_k_1) ;
-	density_clusters(T, muB_k_1, su->getMuS(iel), totalDensityC_k_1, Sum_nBC_k_1, cumulantDensityC_k_1) ;
-	
-	lambdaNprime_k = total_nB/((Sum_nB_k_1 + Sum_nBC_k_1)/lambdaNprime_k_1) ; // recalculation of lambda
-	muB_k = massN + T * log(lambdaNprime_k);
-	
-	if(k>50){ muB_k = (muB_k + muB_k_1)/2 ; lambdaNprime_k = exp((muB_k-massN)/T) ; } // relaxation of iterations
-	double totalDensity_k, Sum_nB_k, Sum_nS_k, totalDensityC_k, Sum_nBC_k; 
-	std::vector<double> cumulantDensity_k;
-	std::vector<double> cumulantDensityC_k;
-	density_particles(T, muB_k, su->getMuS(iel), totalDensity_k, Sum_nB_k, Sum_nS_k, cumulantDensity_k) ;
-	density_clusters(T, muB_k, su->getMuS(iel), totalDensityC_k, Sum_nBC_k, cumulantDensityC_k) ;
-	
-	double total_nB_k = Sum_nB_k + Sum_nBC_k ; 
-	epsilon = abs((total_nB_k - total_nB)/total_nB);	// criterion
-	}//epsilon
- }//muB>0
+		double lambdaNprime_k, lambdaNprime_k_1 ;
+		double muB_k, muB_k_1 ;
+		lambdaNprime_k = lambdaN ;
+		int k = 0;
+		double eps = 0.0001;
+		double epsilon = 1;
+		while (epsilon > eps){
+			k++; // iteration
+			lambdaNprime_k_1 = lambdaNprime_k;
+			muB_k_1 = massN + T * log(lambdaNprime_k_1);
+			double totalDensity_k_1, Sum_nB_k_1, Sum_nS_k_1, totalDensityC_k_1, Sum_nBC_k_1; 
+			std::vector<double> cumulantDensity_k_1;
+			std::vector<double> cumulantDensityC_k_1;
+			density_particles(T, muB_k_1, su->getMuS(iel), totalDensity_k_1, Sum_nB_k_1, Sum_nS_k_1, cumulantDensity_k_1) ;
+			density_clusters(T, muB_k_1, su->getMuS(iel), totalDensityC_k_1, Sum_nBC_k_1, cumulantDensityC_k_1) ;
+			
+			lambdaNprime_k = total_nB/((Sum_nB_k_1 + Sum_nBC_k_1)/lambdaNprime_k_1) ; // recalculation of lambda
+			muB_k = massN + T * log(lambdaNprime_k);
+			
+			if(k>50){ muB_k = (muB_k + muB_k_1)/2 ; lambdaNprime_k = exp((muB_k-massN)/T) ; } // relaxation of iterations
+			double totalDensity_k, Sum_nB_k, Sum_nS_k, totalDensityC_k, Sum_nBC_k; 
+			std::vector<double> cumulantDensity_k;
+			std::vector<double> cumulantDensityC_k;
+			density_particles(T, muB_k, su->getMuS(iel), totalDensity_k, Sum_nB_k, Sum_nS_k, cumulantDensity_k) ;
+			density_clusters(T, muB_k, su->getMuS(iel), totalDensityC_k, Sum_nBC_k, cumulantDensityC_k) ;
+			
+			double total_nB_k = Sum_nB_k + Sum_nBC_k ; 
+			epsilon = abs((total_nB_k - total_nB)/total_nB);	// criterion
+		}//epsilon
+		muB_new = muB_k;
+	}//muB>0
+	else{muB_new = muB;}
     
 	double totalDensity_new, Sum_nB_new, totalDensityClust_new, Sum_nBC_new;
 	double Sum_nS_new = 0.;
 	std::vector<double> cumulantDensity_new;
 	std::vector<double> cumulantDensityClust_new;
-	density_particles(T, muB_k, su->getMuS(iel), totalDensity_new, Sum_nB_new, Sum_nS_new, cumulantDensity_new) ;
-	density_clusters(T, muB_k, su->getMuS(iel), totalDensityClust_new, Sum_nBC_new, cumulantDensityClust_new) ;
+	density_particles(T, muB_new, su->getMuS(iel), totalDensity_new, Sum_nB_new, Sum_nS_new, cumulantDensity_new) ;
+	density_clusters(T, muB_new, su->getMuS(iel), totalDensityClust_new, Sum_nBC_new, cumulantDensityClust_new) ;
 	BSumFinal += 2*(Sum_nB_new + Sum_nBC_new) * dvEff; // new nB of all system
 	SSumFinal += 2*Sum_nS_new * dvEff; // new nS of all system
-	EnergySumFinal += 2*(energy_particles(T, muB_k, su->getMuS(iel)) + energy_clusters(T, muB_k, su->getMuS(iel)) ) * dvEff;
+	EnergySumFinal += 2*(energy_particles(T, muB_new, su->getMuS(iel)) + energy_clusters(T, muB_new, su->getMuS(iel)) ) * dvEff;
 // ---< end thermal densities calculation
  
  /*
@@ -483,7 +486,7 @@ void Generator::generate(Surface *su)
    const double J = part->GetSpin() ;
    const double mass = part->GetMass() ;
    const double stat = int(2.*J) & 1 ? -1. : 1. ;
-   double muf = part->GetBaryonNumber()*muB_k + part->GetStrangeness()*su->getMuS(iel); // and NO electric chem.pot.
+   double muf = part->GetBaryonNumber()*muB_new+ part->GetStrangeness()*su->getMuS(iel); // and NO electric chem.pot.
    if(muf>=mass) cout << " ^^ muf = " << muf << "  " << part->GetPDG() << endl ;
    fthermal->SetParameters(su->getTemp(iel),muf,mass,stat) ;
    if(muf-mass > -muMassLim) muf = mass-muMassLim;
@@ -526,7 +529,7 @@ void Generator::generate(Surface *su)
    const double J = part->GetSpin() ;
    const double mass = part->GetMass() ;
    const double stat = 0; //statClust[ip] ;
-   double muf = part->GetBaryonNumber()*muB_k + part->GetStrangeness()*su->getMuS(iel);  // and NO electric chem.pot.
+   double muf = part->GetBaryonNumber()*muB_new + part->GetStrangeness()*su->getMuS(iel);  // and NO electric chem.pot.
    if(muf-mass > -muMassLim) muf = mass-muMassLim;
    fthermal->SetParameters(su->getTemp(iel),muf,mass,stat) ;
    //const double dfMax = part->GetFMax() ;
