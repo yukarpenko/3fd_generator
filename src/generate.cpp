@@ -242,23 +242,21 @@ void Generator::density_clusters(double T, double muB,  double muS, double& tota
  std::vector<double>&cumulantDensityClust)
 {   total_densityClust = 0 ;
     total_nBClust = 0 ;
-	const int nClustSpec = 19 ;
-	const int pidClust [nClustSpec] = {1000010200, 1000010300, 1000020300, 1000020400, 
-		1000020401, 1000020402, 1000020403, 1000020404, 1000020405, 1000020406, 1000020407, 1000020408, 1000020409,
-		1000020410, 1000020411, 1000020412, 1000020413, 1000020414, 1000020415};
-	const int typesClust [nClustSpec] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18};
+
+	const int NPARTall = database->GetNParticles(true) ;
 	cumulantDensityClust.clear();
-	cumulantDensityClust.reserve(nClustSpec);
-		
-	for(int ip=0; ip<nClustSpec; ip++){
+	cumulantDensityClust.reserve(38);
+	int ipclust = 0;
+	for(int ip=0; ip<NPARTall; ip++){
+		ParticlePDG2 *particle = database->GetPDGParticleByIndex(ip) ;
+		int ID = particle->GetPDG() ;
+		if(abs(ID)>1000000000){
 		double densityClust = 0.;
 		double nBClust = 0.;
-		ParticlePDG2 *particle = database->GetPDGParticle(pidClust[ip]) ;
 		const double mass = particle->GetMass();
 		const double B = particle->GetBaryonNumber();
 		const double S = particle->GetStrangeness();
 		const double J = particle->GetSpin();
-		//int ID = particle->GetPDG() ;
 		//char* Name = particle->GetName() ;
 		double muf = B*muB + S*muS; // and NO electric chem.pot.
 		if(muf-mass > -muMassLim) muf = mass-muMassLim;
@@ -268,10 +266,12 @@ void Generator::density_clusters(double T, double muB,  double muS, double& tota
         densityClust = (2.*J+1.)*T*T*T*pow(gevtofm,3)/(2.*pow(TMath::Pi(),2))*z*z*fz * lambdaC ; //only first term in series
 		nBClust = B*densityClust;
 		
-		if(ip>0) cumulantDensityClust[ip] = cumulantDensityClust[ip-1] + densityClust ;
-        else cumulantDensityClust[ip] = densityClust;
+		if(ipclust>0) cumulantDensityClust[ipclust] = cumulantDensityClust[ipclust-1] + densityClust ;
+        else cumulantDensityClust[ipclust] = densityClust;
+        ipclust++;
 		total_densityClust += densityClust ;
 		total_nBClust += nBClust ;
+		} //if
 		}	// ip clusters
 }
 
@@ -317,14 +317,11 @@ double Generator::energy_particles(double T, double muB, double muS)
 
 double Generator::energy_clusters(double T, double muB, double muS)
 { 	double Epsilon = 0;
-	const int nClustSpec = 19 ;
-	const int pidClust [nClustSpec] = {1000010200, 1000010300, 1000020300, 1000020400, 
-		1000020401, 1000020402, 1000020403, 1000020404, 1000020405, 1000020406, 1000020407, 1000020408, 1000020409,
-		1000020410, 1000020411, 1000020412, 1000020413, 1000020414, 1000020415};
-	const int typesClust [nClustSpec] = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18};
-	
-	for(int ip=0; ip<nClustSpec; ip++){
-		ParticlePDG2 *particle = database->GetPDGParticle(pidClust[ip]) ;
+	const int NPARTall = database->GetNParticles(true) ;
+	for(int ip=0; ip<NPARTall; ip++){
+		ParticlePDG2 *particle = database->GetPDGParticleByIndex(ip) ;
+		int ID = particle->GetPDG() ;
+		if(abs(ID)>1000000000){
 		const double mass = particle->GetMass();
 		const double B = particle->GetBaryonNumber();
 		const double S = particle->GetStrangeness();
@@ -337,6 +334,7 @@ double Generator::energy_clusters(double T, double muB, double muS)
 		double f1z = sqrt(TMath::Pi()/(2*z))*(1+3/(8*z)-15/(128*z*z)+105/(1024*z*z*z)) ;
 			Epsilon += (2.*J +1)*pow(gevtofm,3)/(2.*pow(TMath::Pi(),2))*pow(T,4)*
 			lambdaC*(pow(mass/T,2)*fz + pow(mass/T,3)*f1z ) ; // density of energy
+		}//if
 	} // ip
 	return Epsilon ;
 }
@@ -379,10 +377,15 @@ void Generator::generate(Surface *su)
  TLorentzVector mom ;
  int nmaxiter = 0 ;
  int ntherm_fail=0 ;
- const int nClustSpec = 19 ;
- const int pidClust [nClustSpec] = {1000010200, 1000010300, 1000020300, 1000020400, 
-		1000020401, 1000020402, 1000020403, 1000020404, 1000020405, 1000020406, 1000020407, 1000020408, 1000020409,
-		1000020410, 1000020411, 1000020412, 1000020413, 1000020414, 1000020415};
+ const int NPARTall = database->GetNParticles(true) ;
+	int pidClust[38];
+	int ipclust = 0;
+	for(int ip=0; ip<NPARTall; ip++){
+		ParticlePDG2 *particle = database->GetPDGParticleByIndex(ip) ;
+		int ID = particle->GetPDG() ;
+		if(abs(ID)>1000000000){
+			pidClust[ipclust] = ID; ipclust++; }
+	}
  ofstream fSE ("self_energies");
  
  double EnergySumInit = 0.;
@@ -461,14 +464,6 @@ void Generator::generate(Surface *su)
 	EnergySumFinal += 2*(energy_particles(T, muB_new, su->getMuS(iel)) + energy_clusters(T, muB_new, su->getMuS(iel)) ) * dvEff;
 // ---< end thermal densities calculation
  
- /*
-	double Z = 79;
-	double A = 197;
-	double Nd=0.;
-	double Nt=0.;
-	double Nhe3=0.;
-	double Nhe4=0.;
- */
 	////// EVENTS //////
 	for(int ievent=0; ievent<NEVENTS; ievent++){
 	// ---- number of particles to generate
@@ -508,7 +503,6 @@ void Generator::generate(Surface *su)
      su->getT(iel), mom.Px(), -mom.Py(), mom.Pz(), mom.E(), part, 0) ;
      acceptParticle(ievent,pp);
      acceptParticle(ievent,pp2);
-       
    } // accepted according to the weight
   } // we generate a particle
   
@@ -519,12 +513,13 @@ void Generator::generate(Surface *su)
   }else{
     nToGenClust = rnd->Poisson(dvEff*totalDensityClust_new) ;
   }
-   // ---- we generate a cluster!
-   
+  
+    // ---- we generate a cluster!
   for(int ip=0; ip<nToGenClust; ip++){
   int isort = 0 ;
   double xsort = rnd->Rndm()*totalDensityClust_new ; // throw dice, particle sort
   while(cumulantDensityClust_new[isort]<xsort) isort++ ;
+
    ParticlePDG2 *part = database->GetPDGParticle(pidClust[isort]) ;
    const double J = part->GetSpin() ;
    const double mass = part->GetMass() ;
@@ -551,20 +546,8 @@ void Generator::generate(Surface *su)
      acceptParticle(ievent,pp);
      acceptParticle(ievent,pp2);
    } // accepted according to the weight
-   /*
-   int ID = part->GetPDG() ;
-   // coefficient of protons
-	if(ID==1000010200){Nd++;}
-	else if(ID==1000010300){Nt++;}
-	else if(ID==1000020300){Nhe3++;}
-	else if(ID==1000040400){Nhe4++;}
-	*/ 
-	
-  } // we generate a particle
+  } // we generate a cluster
   } // events loop
-  
-  //double newCoef = (2*Z - Nd - Nt - 2*Nhe3 - 2*Nhe4)/(2*A - 2*Nd - 3*Nt - 3*Nhe3 - 4*Nhe4);
- //cout << "newCoef = "<< newCoef << endl;
   
   
   if(iel%(su->getN()/50)==0) cout<<setw(3)<<(iel*100)/su->getN()<<"%, "<<setw(20)
