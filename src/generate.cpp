@@ -597,82 +597,95 @@ void Generator::acceptParticle(int ievent, Particle *p)
 
 
 // here we decay unstable particles
-void Generator::rescatterDecay(bool decayK0)
-{	
+void Generator::rescatterDecay(bool decayK0){	
+	double Z = 79;
+	double A = 197;
+	
 	cout<<"Decaying resonances\n";
-for(int iev=0; iev<NEVENTS; iev++){
- ievcasc = iev;
- if(rescatter)
-  urqmdmain_();
-//===== decay of unstable resonances ========
-for(int iiter=0; iiter<3; iiter++){
- for(int ipart=0; ipart<ptls[iev].size(); ipart++){
- Particle* p = ptls[iev][ipart] ;
- int ID = p->def->GetPDG() ;
- 
- if(p->def==0) { cout << "*** unknown particle: " << iev << " " << ipart << endl ; continue ; }
- 
- if(p->def->GetWidth()>0. && !isStable(p->def->GetPDG())){
-  p->x = p->x  + p->px/p->E*(400. - p->t) ;
-  p->y = p->y  + p->py/p->E*(400. - p->t) ;
-  p->z = p->z  + p->pz/p->E*(400. - p->t) ;
-  p->t = 400. ;
-  int nprod ;
-  Particle** daughters ;
-  resonanceDecay(p, nprod, daughters) ;
- //------------------ adding daughters to list (daughter #0 replaces original particle)
-  ptls[iev][ipart] = daughters[0] ;
-  for(int iprod=1; iprod<nprod; iprod++){
-    ptls[iev].push_back(daughters[iprod]) ;
-  }
-  
-  delete [] daughters ;
-  delete p ;
-//--------------------------------------------
-  } // decay procedure	
- } //ipart
- } // decay iteration
- 
- if(decayK0 == true){
-//===== decay of unstable resonances K0 ========
-for(int ipart=0; ipart<ptls[iev].size(); ipart++){
-	 Particle* p = ptls[iev][ipart] ;
-	 int ID = p->def->GetPDG() ;
-	 if (abs(ID) == 311) {
-		 Double_t randValue = rnd->Rndm() ;
-		 if (randValue >0.5){
-			p->x = p->x  + p->px/p->E*(400. - p->t) ;
-			p->y = p->y  + p->py/p->E*(400. - p->t) ;
-			p->z = p->z  + p->pz/p->E*(400. - p->t) ;
-			p->t = 400. ;
-			int nprod ;
-			Particle** daughters ;
-			resonanceDecay(p, nprod, daughters) ;
-			ptls[iev][ipart] = daughters[0] ;
-			for(int iprod=1; iprod<nprod; iprod++){ ptls[iev].push_back(daughters[iprod]) ;}
-  
-			delete [] daughters ;
-			delete p ;
-		} //instable K0
-	 } // K0
-     /*
-	if (ID == 2112 || ID == 2212) {
-		Double_t randValue = rnd->Rndm() ;
-		if (randValue >0.6){
-			Particle *neutron = new Particle(p->x, p->y, p->z, p->t, p->px, p->py, p->pz, p->E, database->GetPDGParticle(2112), p->mid);
-			//ptls[iev].push_back(daughters[iprod]) ;
-			ptls[iev][ipart] = neutron ;
-			//ptls.erase(ipart) ;
-			//ptls[iev].insert(ipart,neutron);
-			}
-		else{ 
-			Particle *proton = new Particle(p->x, p->y, p->z, p->t, p->px, p->py, p->pz, p->E, database->GetPDGParticle(2212), p->mid);
-			ptls[iev][ipart] = proton ;}
-		} 
-		*/
- }//ipart
-}// if true
-} // events loop
+	for(int iev=0; iev<NEVENTS; iev++){
+		ievcasc = iev;
+		if(rescatter)
+		urqmdmain_();
+		//===== decay of unstable resonances ========
+		for(int iiter=0; iiter<3; iiter++){
+			for(int ipart=0; ipart<ptls[iev].size(); ipart++){
+				Particle* p = ptls[iev][ipart] ;
+				int ID = p->def->GetPDG() ;
+				if(p->def==0) { cout << "*** unknown particle: " << iev << " " << ipart << endl ; continue ; }
+				if(p->def->GetWidth()>0. && !isStable(p->def->GetPDG())){
+					p->x = p->x  + p->px/p->E*(400. - p->t) ;
+					p->y = p->y  + p->py/p->E*(400. - p->t) ;
+					p->z = p->z  + p->pz/p->E*(400. - p->t) ;
+					p->t = 400. ;
+					int nprod ;
+					Particle** daughters ;
+					resonanceDecay(p, nprod, daughters) ;
+					//------------------ adding daughters to list (daughter #0 replaces original particle)
+					ptls[iev][ipart] = daughters[0] ;
+					for(int iprod=1; iprod<nprod; iprod++){
+						ptls[iev].push_back(daughters[iprod]) ;
+					}
+					
+					delete [] daughters ;
+					delete p ;
+					//--------------------------------------------
+				} // decay procedure	
+			} //ipart
+		} // decay iteration
+		
+		double Nd = 0.;
+		double Nt = 0.;
+		double Nhe3 = 0.;
+		double Nhe4 = 0.;
+		double BSum = 0.;
+		
+		for(int ipart=0; ipart<ptls[iev].size(); ipart++){
+			Particle* p = ptls[iev][ipart] ;
+			int ID = p->def->GetPDG() ;
+			int B = p->def->GetBaryonNumber();
+			BSum+=B;
+			//----------decay of unstable K0 ----------------
+			if (decayK0 == true && abs(ID) == 311) {
+				Double_t randValue = rnd->Rndm() ;
+				if (randValue >0.5){
+					p->x = p->x  + p->px/p->E*(400. - p->t) ;
+					p->y = p->y  + p->py/p->E*(400. - p->t) ;
+					p->z = p->z  + p->pz/p->E*(400. - p->t) ;
+					p->t = 400. ;
+					int nprod ;
+					Particle** daughters ;
+					resonanceDecay(p, nprod, daughters) ;
+					ptls[iev][ipart] = daughters[0] ;
+					for(int iprod=1; iprod<nprod; iprod++){ ptls[iev].push_back(daughters[iprod]) ;}
+					delete [] daughters ;
+					delete p ;
+				} //instable K0
+			} // K0
+			else if(ID==1000010200){ Nd++;}
+			else if(ID==1000010300){ Nt++;}
+			else if(ID==1000020300){ Nhe3++;}
+			else if(ID==1000020400){ Nhe4++;}
+		}//ipart
+		
+		double Rproton= (Z*BSum/A - Nd - Nt - 2*Nhe3 - 2*Nhe4)/(BSum - 2*Nd - 3*Nt - 3*Nhe3 - 4*Nhe4); // the fraction of protons
+		
+		for(int ipart=0; ipart<ptls[iev].size(); ipart++){
+			Particle* p = ptls[iev][ipart] ;
+			int ID = p->def->GetPDG() ;
+			if (ID == 2112 || ID == 2212) {
+				Double_t randValue = rnd->Rndm() ;
+				if (randValue >Rproton){
+					Particle *neutron = new Particle(p->x, p->y, p->z, p->t, p->px, p->py, p->pz, p->E, database->GetPDGParticle(2112), p->mid);
+					ptls[iev][ipart] = neutron ;
+				}
+				else{ 
+					Particle *proton = new Particle(p->x, p->y, p->z, p->t, p->px, p->py, p->pz, p->E, database->GetPDGParticle(2212), p->mid);
+					ptls[iev][ipart] = proton ;
+				}
+				delete p ;
+			}//if
+		} //ipart 
+	} // events loop
 }
 
 
