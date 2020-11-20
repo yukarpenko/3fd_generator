@@ -15,6 +15,7 @@
 class Surface{
  public:
   Surface() {};
+  virtual float getA(void) = 0;
   virtual int getN(void) = 0;
   virtual float getX(int i) = 0;
   virtual float getY(int i) = 0;
@@ -46,6 +47,7 @@ class BaryonRich : public Surface {
   int *ifluid;
 public:
   BaryonRich(const char *filename);
+  virtual inline float getA(void) { return ApN; }
   virtual inline int getN(void) { return Nptot; }
   virtual inline float getX(int i) { return x[i]; }
   virtual inline float getY(int i) { return y[i]; }
@@ -77,6 +79,7 @@ class Fireball : public Surface {
       *Etpip;
  public:
   Fireball(const char *filename);
+  virtual inline float getA(void) { return 0.; }
   virtual inline int getN(void) { return Jpi; }
   virtual inline float getX(int i) { return xpi[i]; }
   virtual inline float getY(int i) { return ypi[i]; }

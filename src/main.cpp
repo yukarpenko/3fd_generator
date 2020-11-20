@@ -89,6 +89,7 @@ int main(int argc, char **argv) {
 
  gen->generate2surf(&surf1, &surf2, nevents);
  gen->rescatterDecay(decayK0);
+ gen->recalculationNPandTHe3(&surf1);
  gen->fillTree();
  file.Write("",TObject::kOverwrite);
  file.Close();

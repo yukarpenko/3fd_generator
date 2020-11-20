@@ -598,9 +598,6 @@ void Generator::acceptParticle(int ievent, Particle *p)
 
 // here we decay unstable particles
 void Generator::rescatterDecay(bool decayK0){	
-	double Z = 79;
-	double A = 197;
-	
 	cout<<"Decaying resonances\n";
 	for(int iev=0; iev<NEVENTS; iev++){
 		ievcasc = iev;
@@ -633,17 +630,9 @@ void Generator::rescatterDecay(bool decayK0){
 			} //ipart
 		} // decay iteration
 		
-		double Nd = 0.;
-		double Nt = 0.;
-		double Nhe3 = 0.;
-		double Nhe4 = 0.;
-		double BSum = 0.;
-		
 		for(int ipart=0; ipart<ptls[iev].size(); ipart++){
 			Particle* p = ptls[iev][ipart] ;
 			int ID = p->def->GetPDG() ;
-			int B = p->def->GetBaryonNumber();
-			BSum+=B;
 			//----------decay of unstable K0 ----------------
 			if (decayK0 == true && abs(ID) == 311) {
 				Double_t randValue = rnd->Rndm() ;
@@ -661,14 +650,35 @@ void Generator::rescatterDecay(bool decayK0){
 					delete p ;
 				} //instable K0
 			} // K0
-			else if(ID==1000010200){ Nd++;}
+		}//ipart
+	} // events loop
+}
+
+void Generator::recalculationNPandTHe3(Surface *su1){	
+	double A = su1->getA();
+	double Z = A/2*(1/(1+(3./400.)*pow(A,2./3.)));
+	
+	for(int iev=0; iev<NEVENTS; iev++){
+		double Nd = 0.;
+		double Nt = 0.;
+		double Nhe3 = 0.;
+		double Nhe4 = 0.;
+		double BSum = 0.;
+		
+		for(int ipart=0; ipart<ptls[iev].size(); ipart++){
+			Particle* p = ptls[iev][ipart] ;
+			int ID = p->def->GetPDG() ;
+			int B = p->def->GetBaryonNumber();
+			BSum+=B;
+			if(ID==1000010200){ Nd++;}
 			else if(ID==1000010300){ Nt++;}
 			else if(ID==1000020300){ Nhe3++;}
 			else if(ID==1000020400){ Nhe4++;}
 		}//ipart
-		
-		double Rproton= (Z*BSum/A - Nd - Nt - 2*Nhe3 - 2*Nhe4)/(BSum - 2*Nd - 3*Nt - 3*Nhe3 - 4*Nhe4); // the fraction of protons
-		
+	
+	double Rproton= (Z*BSum/A - Nd - Nt - 2*Nhe3 - 2*Nhe4)/(BSum - 2*Nd - 3*Nt - 3*Nhe3 - 4*Nhe4); // the fraction of protons
+	//cout<< BSum << " " <<  Z<<"  " << A << " "<< Nd << endl; 
+		//cout << Rproton<< endl;
 		for(int ipart=0; ipart<ptls[iev].size(); ipart++){
 			Particle* p = ptls[iev][ipart] ;
 			int ID = p->def->GetPDG() ;
@@ -684,11 +694,21 @@ void Generator::rescatterDecay(bool decayK0){
 				}
 				delete p ;
 			}//if
-		} //ipart 
-	} // events loop
+			else if (ID == 1000010300 || ID == 1000020300) {         
+				Double_t randValue = rnd->Rndm() ;       
+				if (randValue > Z/A){
+					Particle * tritium = new Particle(p->x, p->y, p->z, p->t, p->px, p->py, p->pz, p->E, database->GetPDGParticle(1000010300), p->mid);
+					ptls[iev][ipart] = tritium ;
+				}
+				else{ 
+					Particle *helium3 = new Particle(p->x, p->y, p->z, p->t, p->px, p->py, p->pz, p->E, database->GetPDGParticle(1000020300), p->mid);
+					ptls[iev][ipart] = helium3 ;
+				}
+				delete p ;
+			}// else if
+		} // ip
+	} //iel
 }
-
-
 void Generator::fillTree()
 {
  cout<<"Writing trees\n";

@@ -41,6 +41,7 @@ public:
  void generate2surf(Surface *su1, Surface *su2, int nevents);
  void acceptParticle(int ievent, Particle *p);
  void rescatterDecay(bool decayK0);
+ void recalculationNPandTHe3(Surface *su1);
  void fillTree();
  void loadSETables(const char* filename);
  void deltaE(double T, double nb, int type, double& S, double& V);
