@@ -422,11 +422,12 @@ void Generator::generate(Surface *su)
 	if(muB > 0){
 		double lambdaNprime_k, lambdaNprime_k_1 ;
 		double muB_k, muB_k_1 ;
+		muB_k  =  muB;
 		lambdaNprime_k = lambdaN ;
 		int k = 0;
 		double eps = 0.0001;
 		double epsilon = 1;
-		while (epsilon > eps){
+		while (epsilon > eps && muB_k> 0.006){
 			k++; // iteration
 			lambdaNprime_k_1 = lambdaNprime_k;
 			muB_k_1 = massN + T * log(lambdaNprime_k_1);
@@ -450,6 +451,7 @@ void Generator::generate(Surface *su)
 			epsilon = abs((total_nB_k - total_nB)/total_nB);	// criterion
 		}//epsilon
 		muB_new = muB_k;
+		if(muB_new < 0.006){muB_new = muB;}	
 	}//muB>0
 	else{muB_new = muB;}
     
